@@ -1,0 +1,202 @@
+{
+  "start": {
+    "lede": "Pega texto de un lado a otro, en directo. Lo que pegas llega tal como lo pegaste, incluidos los finales de línea.",
+    "privacy": "Las notas se cifran en tu navegador antes de enviarse, así que el servidor solo las guarda cifradas, en memoria y nunca en disco. Una sesión se elimina cuando alguien la finaliza, cuando caduca o poco después de que todos se hayan ido.",
+    "title": "Nueva sesión",
+    "hint": "Recibes un nombre de sesión y una contraseña aleatorios para enviar a la otra persona.",
+    "hours": "Eliminar todo después de",
+    "name": "Tu nombre",
+    "namePlaceholder": "Opcional",
+    "go": "Iniciar nueva sesión",
+    "busy": "Iniciando…"
+  },
+  "join": {
+    "title": "Unirse a una sesión",
+    "hint": "Usa el nombre de sesión y la contraseña que te enviaron, o abre el enlace.",
+    "id": "Nombre de sesión",
+    "idPlaceholder": "12-dancing-apes",
+    "pass": "Contraseña",
+    "go": "Unirse a la sesión",
+    "busy": "Uniéndote…",
+    "badId": "Un nombre de sesión tiene este formato: 12-dancing-apes."
+  },
+  "gone": {
+    "title": "Esta sesión ha terminado.",
+    "lede": "Alguien la finalizó, todos se fueron, caducó o el servidor se reinició. Las notas de la sesión ya no están en el servidor.",
+    "home": "Volver a la página principal"
+  },
+  "room": {
+    "here": { "one": "{count} en línea", "other": "{count} en línea" },
+    "hereTitle": "Personas con esta sesión abierta",
+    "connecting": "Conectando…",
+    "reconnecting": "Reconectando…",
+    "newNote": "Nueva nota de {name}",
+    "empty": "Todavía no hay notas.",
+    "emptyHint": "Pega algo abajo, o pega en cualquier parte de esta página."
+  },
+  "invite": {
+    "button": "Invitar",
+    "label": "Envía esto a la otra persona",
+    "linkPass": "Enlace con contraseña",
+    "link": "Enlace",
+    "id": "Sesión",
+    "pass": "Contraseña",
+    "copy": "Copiar",
+    "copyInvite": "Copiar invitación",
+    "noPass": "No guardada en esta pestaña",
+    "hint": "Para más seguridad, envía el enlace sin la contraseña y la contraseña por otro canal.",
+    "text": "Únete a mi sesión en {app}:\n{link}\n\nO abre {base} e introduce\nSesión: {id}\nContraseña: {pass}",
+    "copied": {
+      "linkPass": "Enlace con contraseña copiado.",
+      "link": "Enlace copiado.",
+      "id": "Nombre de sesión copiado.",
+      "pass": "Contraseña copiada.",
+      "invite": "Invitación copiada."
+    }
+  },
+  "expiry": {
+    "button": "Caducidad",
+    "title": "Cambiar cuándo se elimina esta sesión",
+    "in": "Se elimina en {time}",
+    "label": "Eliminar todo en",
+    "set": "Todo se eliminará en {time}.",
+    "clear": "Borrar todas las notas",
+    "end": "Finalizar la sesión y eliminarla"
+  },
+  "time": {
+    "d": "{d} d",
+    "hm": "{h} h {m} min",
+    "m": "{m} min"
+  },
+  "hours": {
+    "1": "1 hora",
+    "8": "8 horas",
+    "24": "24 horas",
+    "72": "3 días",
+    "168": "7 días"
+  },
+  "hoursShort": {
+    "1": "1 h",
+    "8": "8 h",
+    "24": "24 h",
+    "72": "3 d",
+    "168": "7 d"
+  },
+  "confirm": {
+    "cancel": "Cancelar",
+    "clear": {
+      "one": "¿Borrar la única nota? Desaparece para todos en esta sesión.",
+      "other": "¿Borrar las {count} notas? Desaparecen para todos en esta sesión."
+    },
+    "clearYes": "Borrar todo",
+    "end": "¿Finalizar esta sesión? Todas las notas se eliminan del servidor y el enlace deja de funcionar para todos.",
+    "endYes": "Finalizar sesión"
+  },
+  "toast": {
+    "deleted": "Nota eliminada para todos.",
+    "cleared": "Se borraron todas las notas.",
+    "nothingToClear": "No hay notas que borrar."
+  },
+  "note": {
+    "anon": "Anónimo",
+    "you": "{name} (tú)",
+    "unreadable": "Nota ilegible",
+    "plain": "Texto sin formato",
+    "lines": { "one": "{count} línea", "other": "{count} líneas" },
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "wrap": "Ajustar",
+    "noWrap": "No ajustar",
+    "wrapTitle": "Ajustar las líneas largas (solo en pantalla)",
+    "delete": "Eliminar",
+    "showAll": { "one": "Mostrar {count} línea", "other": "Mostrar las {count} líneas" },
+    "showLess": "Mostrar menos",
+    "reply": "Responder",
+    "pin": "Fijar",
+    "unpin": "Dejar de fijar"
+  },
+  "reply": {
+    "to": "Respondiendo a {name} · {lang} · {lines}",
+    "strip": "↪ {name} · {lang} · {lines}",
+    "deleted": "↪ La nota original se eliminó",
+    "cancel": "Cancelar respuesta",
+    "jump": "Ir a la nota original"
+  },
+  "react": {
+    "add": "Añadir reacción",
+    "pick": "Elige una reacción",
+    "chip": "{emoji} {count}: {names}"
+  },
+  "pin": {
+    "title": "Fijadas ({count})",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "jump": "Ir a esta nota",
+    "showFirst": "Mostrar las primeras {count} líneas",
+    "openFeed": "Abrir en la lista (las {count} líneas)"
+  },
+  "burn": {
+    "title": "Destruir tras leer",
+    "read": "Abierta una vez y eliminada.",
+    "readBy": "Leída por {name} y eliminada.",
+    "waiting": "Esperando a que alguien la lea.",
+    "open": "Abrir y leer una vez",
+    "opening": "Abriendo…",
+    "close": "Cerrar",
+    "reveal": "Mostrar",
+    "hide": "Ocultar",
+    "gone": "Esta nota ya se abrió o se eliminó.",
+    "forbidden": "Tú enviaste esta nota, así que no puedes abrirla aquí.",
+    "once": "Se muestra una sola vez. Al cerrarla, desaparece.",
+    "hidden": "Texto oculto",
+    "new": "Nueva nota que se destruye tras leerla",
+    "opened": "Nota abierta"
+  },
+  "size": {
+    "b": "{n} B",
+    "kb": "{n} KB",
+    "mb": "{n} MB"
+  },
+  "compose": {
+    "label": "Texto de la nota",
+    "placeholder": "Pega o escribe aquí. Ctrl+Intro o Cmd+Intro para enviar.",
+    "lang": "Resaltado de sintaxis",
+    "detect": "Detectar",
+    "plain": "Texto sin formato",
+    "common": "Comunes",
+    "all": "Todos los lenguajes",
+    "as": "Como",
+    "burn": "Destruir tras leer",
+    "name": "Tu nombre",
+    "size": "{lines} · {size}",
+    "send": "Enviar"
+  },
+  "settings": {
+    "button": "Ajustes",
+    "theme": "Tema",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "language": "Idioma"
+  },
+  "credit": "Creado por SideBit",
+  "error": {
+    "BAD_REQUEST": "El servidor no pudo procesar esta solicitud.",
+    "NOT_FOUND": "No hay ninguna sesión con ese nombre y esa contraseña.",
+    "LOCKED": "Demasiados intentos fallidos desde tu red. Inténtalo más tarde.",
+    "RATE_LIMITED": "Demasiadas sesiones nuevas desde tu red. Inténtalo más tarde.",
+    "TAKEN": "Ese nombre de sesión ya está en uso. Inténtalo de nuevo.",
+    "TOO_LARGE": "Es demasiado grande para enviarlo.",
+    "SESSION_FULL": "Esta sesión está llena. Borra todas las notas para liberar espacio.",
+    "SERVER_FULL": "El servidor está lleno en este momento. Inténtalo más tarde.",
+    "GONE": "Esa nota ya no existe.",
+    "FORBIDDEN": "No puedes abrir una nota que enviaste tú.",
+    "METHOD": "El servidor no pudo procesar esta solicitud.",
+    "INSECURE": "Esta página debe abrirse por HTTPS (o en localhost). El cifrado no está disponible con http simple.",
+    "INTERNAL": "Algo salió mal en el servidor. Inténtalo de nuevo.",
+    "CONNECTION": "No hay conexión con el servidor. Comprueba tu conexión e inténtalo de nuevo.",
+    "BUSY": "Esta sesión o el servidor está ocupado ahora mismo. Volviendo a intentarlo…",
+    "COPY_BLOCKED": "El navegador bloqueó la copia. Selecciona el texto y cópialo manualmente.",
+    "DECRYPT": "No se pudo descifrar esta nota."
+  }
+}

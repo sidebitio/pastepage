@@ -1,0 +1,202 @@
+{
+  "start": {
+    "lede": "Échangez du texte en direct par copier-coller. Ce que vous collez arrive tel que vous l'avez collé, fins de ligne comprises.",
+    "privacy": "Les notes sont chiffrées dans votre navigateur avant d'être envoyées : le serveur ne les détient donc que chiffrées, en mémoire, jamais sur disque. Une session est supprimée quand quelqu'un y met fin, quand elle expire ou peu après le départ de tous les participants.",
+    "title": "Nouvelle session",
+    "hint": "Vous obtenez un nom de session et un mot de passe aléatoires à envoyer à l'autre personne.",
+    "hours": "Tout supprimer après",
+    "name": "Votre nom",
+    "namePlaceholder": "Facultatif",
+    "go": "Démarrer une nouvelle session",
+    "busy": "Démarrage…"
+  },
+  "join": {
+    "title": "Rejoindre une session",
+    "hint": "Utilisez le nom de session et le mot de passe que vous avez reçus, ou ouvrez le lien.",
+    "id": "Nom de session",
+    "idPlaceholder": "12-dancing-apes",
+    "pass": "Mot de passe",
+    "go": "Rejoindre la session",
+    "busy": "Connexion…",
+    "badId": "Un nom de session ressemble à 12-dancing-apes."
+  },
+  "gone": {
+    "title": "Cette session est terminée.",
+    "lede": "Quelqu'un y a mis fin, tout le monde est parti, elle a expiré ou le serveur a redémarré. Ses notes ne sont plus sur le serveur.",
+    "home": "Retour à la page d'accueil"
+  },
+  "room": {
+    "here": { "one": "{count} en ligne", "other": "{count} en ligne" },
+    "hereTitle": "Personnes ayant cette session ouverte",
+    "connecting": "Connexion…",
+    "reconnecting": "Reconnexion…",
+    "newNote": "Nouvelle note de {name}",
+    "empty": "Aucune note pour l'instant.",
+    "emptyHint": "Collez quelque chose ci-dessous, ou n'importe où sur cette page."
+  },
+  "invite": {
+    "button": "Inviter",
+    "label": "Envoyez ceci à l'autre personne",
+    "linkPass": "Lien avec mot de passe",
+    "link": "Lien",
+    "id": "Session",
+    "pass": "Mot de passe",
+    "copy": "Copier",
+    "copyInvite": "Copier l'invitation",
+    "noPass": "Non enregistré dans cet onglet",
+    "hint": "Pour plus de sécurité, envoyez le lien sans le mot de passe, et le mot de passe par un autre canal.",
+    "text": "Rejoignez-moi sur {app} :\n{link}\n\nOu ouvrez {base} et saisissez\nSession : {id}\nMot de passe : {pass}",
+    "copied": {
+      "linkPass": "Lien avec mot de passe copié.",
+      "link": "Lien copié.",
+      "id": "Nom de session copié.",
+      "pass": "Mot de passe copié.",
+      "invite": "Invitation copiée."
+    }
+  },
+  "expiry": {
+    "button": "Expiration",
+    "title": "Modifier quand cette session sera supprimée",
+    "in": "Suppression dans {time}",
+    "label": "Tout supprimer dans",
+    "set": "Tout sera supprimé dans {time}.",
+    "clear": "Effacer toutes les notes",
+    "end": "Terminer la session et la supprimer"
+  },
+  "time": {
+    "d": "{d} j",
+    "hm": "{h} h {m} min",
+    "m": "{m} min"
+  },
+  "hours": {
+    "1": "1 heure",
+    "8": "8 heures",
+    "24": "24 heures",
+    "72": "3 jours",
+    "168": "7 jours"
+  },
+  "hoursShort": {
+    "1": "1 h",
+    "8": "8 h",
+    "24": "24 h",
+    "72": "3 j",
+    "168": "7 j"
+  },
+  "confirm": {
+    "cancel": "Annuler",
+    "clear": {
+      "one": "Effacer la seule note ? Elle disparaît pour tous les participants de cette session.",
+      "other": "Effacer les {count} notes ? Elles disparaissent pour tous les participants de cette session."
+    },
+    "clearYes": "Tout effacer",
+    "end": "Terminer cette session ? Toutes les notes sont supprimées du serveur et le lien ne fonctionne plus pour personne.",
+    "endYes": "Terminer la session"
+  },
+  "toast": {
+    "deleted": "Note supprimée pour tout le monde.",
+    "cleared": "Toutes les notes ont été effacées.",
+    "nothingToClear": "Il n'y a aucune note à effacer."
+  },
+  "note": {
+    "anon": "Anonyme",
+    "you": "{name} (vous)",
+    "unreadable": "Note illisible",
+    "plain": "Texte brut",
+    "lines": { "one": "{count} ligne", "other": "{count} lignes" },
+    "copy": "Copier",
+    "copied": "Copié",
+    "wrap": "Retour à la ligne",
+    "noWrap": "Sans retour à la ligne",
+    "wrapTitle": "Renvoyer les longues lignes à la ligne (affichage uniquement)",
+    "delete": "Supprimer",
+    "showAll": { "one": "Afficher {count} ligne", "other": "Afficher les {count} lignes" },
+    "showLess": "Afficher moins",
+    "reply": "Répondre",
+    "pin": "Épingler",
+    "unpin": "Désépingler"
+  },
+  "reply": {
+    "to": "Réponse à {name} · {lang} · {lines}",
+    "strip": "↪ {name} · {lang} · {lines}",
+    "deleted": "↪ La note d'origine a été supprimée",
+    "cancel": "Annuler la réponse",
+    "jump": "Aller à la note d'origine"
+  },
+  "react": {
+    "add": "Ajouter une réaction",
+    "pick": "Choisir une réaction",
+    "chip": "{emoji} {count} : {names}"
+  },
+  "pin": {
+    "title": "Épinglées ({count})",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "jump": "Aller à cette note",
+    "showFirst": "Afficher les {count} premières lignes",
+    "openFeed": "Ouvrir dans le fil (les {count} lignes)"
+  },
+  "burn": {
+    "title": "Détruire après lecture",
+    "read": "Ouverte une fois, puis supprimée.",
+    "readBy": "Lue par {name}, puis supprimée.",
+    "waiting": "En attente de lecture.",
+    "open": "Ouvrir et lire une seule fois",
+    "opening": "Ouverture…",
+    "close": "Fermer",
+    "reveal": "Afficher",
+    "hide": "Masquer",
+    "gone": "Cette note a déjà été ouverte ou supprimée.",
+    "forbidden": "Vous avez envoyé cette note, vous ne pouvez donc pas l'ouvrir ici.",
+    "once": "Affichée une seule fois. Une fois fermée, elle disparaît.",
+    "hidden": "Texte masqué",
+    "new": "Nouvelle note à détruire après lecture",
+    "opened": "Note ouverte"
+  },
+  "size": {
+    "b": "{n} o",
+    "kb": "{n} Ko",
+    "mb": "{n} Mo"
+  },
+  "compose": {
+    "label": "Texte de la note",
+    "placeholder": "Collez ou tapez ici. Ctrl+Entrée ou Cmd+Entrée pour envoyer.",
+    "lang": "Coloration syntaxique",
+    "detect": "Détection auto",
+    "plain": "Texte brut",
+    "common": "Courants",
+    "all": "Tous les langages",
+    "as": "En tant que",
+    "burn": "Détruire après lecture",
+    "name": "Votre nom",
+    "size": "{lines} · {size}",
+    "send": "Envoyer"
+  },
+  "settings": {
+    "button": "Paramètres",
+    "theme": "Thème",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre",
+    "language": "Langue"
+  },
+  "credit": "Créé par SideBit",
+  "error": {
+    "BAD_REQUEST": "Le serveur n'a pas pu traiter cette demande.",
+    "NOT_FOUND": "Aucune session avec ce nom et ce mot de passe.",
+    "LOCKED": "Trop de tentatives erronées depuis votre réseau. Réessayez plus tard.",
+    "RATE_LIMITED": "Trop de nouvelles sessions depuis votre réseau. Réessayez plus tard.",
+    "TAKEN": "Ce nom de session est déjà utilisé. Réessayez.",
+    "TOO_LARGE": "C'est trop volumineux pour être envoyé.",
+    "SESSION_FULL": "Cette session est pleine. Effacez toutes les notes pour libérer de la place.",
+    "SERVER_FULL": "Le serveur est plein pour le moment. Réessayez plus tard.",
+    "GONE": "Cette note n'existe plus.",
+    "FORBIDDEN": "Vous ne pouvez pas ouvrir une note que vous avez envoyée vous-même.",
+    "METHOD": "Le serveur n'a pas pu traiter cette demande.",
+    "INSECURE": "Cette page doit être ouverte en HTTPS (ou sur localhost). Le chiffrement n'est pas disponible en http simple.",
+    "INTERNAL": "Une erreur s'est produite sur le serveur. Réessayez.",
+    "CONNECTION": "Pas de connexion au serveur. Vérifiez votre connexion et réessayez.",
+    "BUSY": "Cette session ou le serveur est occupé pour le moment. Nouvelle tentative…",
+    "COPY_BLOCKED": "Le navigateur a bloqué la copie. Sélectionnez le texte et copiez-le vous-même.",
+    "DECRYPT": "Cette note n'a pas pu être déchiffrée."
+  }
+}

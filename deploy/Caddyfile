@@ -1,0 +1,19 @@
+# PastePage behind Caddy. Use ONE of the two options below.
+# Each line is explained in docs/deployment.md.
+# Caddy gets and renews the HTTPS certificate for the domain by itself.
+
+# Option 1: PastePage on its own subdomain, https://paste.example.com/
+paste.example.com {
+	reverse_proxy 127.0.0.1:3000
+}
+
+# Option 2: PastePage under a path of an existing site, https://example.com/pastepage/
+# Add the redir and handle_path lines to the site block you already have.
+example.com {
+	redir /pastepage /pastepage/ 308
+	handle_path /pastepage/* {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	# ... the rest of your site ...
+}

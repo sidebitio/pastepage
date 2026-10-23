@@ -1,0 +1,171 @@
+<!doctype html>
+<!-- Single page for the whole app: start screen, ended-session screen and the room. Scripts and styles are
+     external files only (no inline code), and all visible text comes from data-i18n attributes. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>PastePage</title>
+<script src="theme.js"></script>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/highlight.min.js" defer></script>
+<script src="js/app.js" type="module"></script>
+</head>
+<body>
+
+<main id="view-start" class="screen" hidden>
+  <div class="wrap">
+    <p class="brand">Paste<span>Page</span></p>
+    <p class="lede" data-i18n="start.lede"></p>
+    <div class="cards">
+      <form id="start-form" class="card form" autocomplete="off">
+        <h2 data-i18n="start.title"></h2>
+        <p class="hint" data-i18n="start.hint"></p>
+        <label for="start-hours" data-i18n="start.hours"></label>
+        <select id="start-hours"></select>
+        <label for="start-name" data-i18n="start.name"></label>
+        <input id="start-name" type="text" maxlength="40" data-i18n-placeholder="start.namePlaceholder">
+        <button class="primary" type="submit" id="start-go" data-i18n="start.go"></button>
+        <p class="error" id="start-err" role="alert" hidden></p>
+      </form>
+      <form id="join-form" class="card form" autocomplete="off">
+        <h2 data-i18n="join.title"></h2>
+        <p class="hint" data-i18n="join.hint"></p>
+        <label for="join-id" data-i18n="join.id"></label>
+        <input id="join-id" type="text" required spellcheck="false" autocapitalize="off" autocorrect="off" data-i18n-placeholder="join.idPlaceholder">
+        <label for="join-pass" data-i18n="join.pass"></label>
+        <input id="join-pass" type="text" required spellcheck="false" autocapitalize="off" autocorrect="off">
+        <label for="join-name" data-i18n="start.name"></label>
+        <input id="join-name" type="text" maxlength="40" data-i18n-placeholder="start.namePlaceholder">
+        <button class="primary" type="submit" id="join-go" data-i18n="join.go"></button>
+        <p class="error" id="join-err" role="alert" hidden></p>
+      </form>
+    </div>
+    <p class="hint foot" data-i18n="start.privacy"></p>
+    <footer class="site-foot">
+      <div class="theme-switch" role="group" data-i18n-aria="settings.theme">
+        <button type="button" data-theme-choice="system" data-i18n="settings.system"></button>
+        <button type="button" data-theme-choice="light" data-i18n="settings.light"></button>
+        <button type="button" data-theme-choice="dark" data-i18n="settings.dark"></button>
+      </div>
+      <select class="lang-select" data-i18n-aria="settings.language"></select>
+      <a class="credit" href="https://sidebit.io" target="_blank" rel="noopener" data-i18n="credit"></a>
+    </footer>
+  </div>
+</main>
+
+<main id="view-gone" class="screen" hidden>
+  <div class="wrap narrow">
+    <p class="brand">Paste<span>Page</span></p>
+    <h1 data-i18n="gone.title"></h1>
+    <p class="lede" data-i18n="gone.lede"></p>
+    <p><button type="button" class="primary" id="gone-new" data-i18n="gone.home"></button></p>
+    <footer class="site-foot">
+      <div class="theme-switch" role="group" data-i18n-aria="settings.theme">
+        <button type="button" data-theme-choice="system" data-i18n="settings.system"></button>
+        <button type="button" data-theme-choice="light" data-i18n="settings.light"></button>
+        <button type="button" data-theme-choice="dark" data-i18n="settings.dark"></button>
+      </div>
+      <select class="lang-select" data-i18n-aria="settings.language"></select>
+      <a class="credit" href="https://sidebit.io" target="_blank" rel="noopener" data-i18n="credit"></a>
+    </footer>
+  </div>
+</main>
+
+<div id="view-room" class="room" hidden>
+  <header class="top">
+    <div class="wrap top-row">
+      <p class="brand small">Paste<span>Page</span></p>
+      <span class="pill live" id="present" data-i18n-title="room.hereTitle"></span>
+      <div class="spacer"></div>
+      <div class="menu-wrap">
+        <button type="button" class="ghost" id="invite-btn" aria-haspopup="true" aria-expanded="false" aria-controls="invite-menu" data-i18n="invite.button"></button>
+        <div class="menu invite" id="invite-menu" hidden>
+          <p class="menu-label" data-i18n="invite.label"></p>
+          <div class="kv" id="inv-row-linkPass"><span data-i18n="invite.linkPass"></span><code id="inv-linkPass"></code><button type="button" data-copy="linkPass" data-i18n="invite.copy"></button></div>
+          <div class="kv"><span data-i18n="invite.link"></span><code id="inv-link"></code><button type="button" data-copy="link" data-i18n="invite.copy"></button></div>
+          <div class="kv"><span data-i18n="invite.id"></span><code id="inv-id"></code><button type="button" data-copy="id" data-i18n="invite.copy"></button></div>
+          <div class="kv"><span data-i18n="invite.pass"></span><code id="inv-pass"></code><button type="button" data-copy="pass" id="inv-copy-pass" data-i18n="invite.copy"></button></div>
+          <button type="button" class="primary block" data-copy="invite" id="inv-copy-invite" data-i18n="invite.copyInvite"></button>
+          <p class="hint" data-i18n="invite.hint"></p>
+        </div>
+      </div>
+      <div class="menu-wrap">
+        <button type="button" class="pill expiry" id="expiry-btn" aria-haspopup="true" aria-expanded="false" aria-controls="expiry-menu" data-i18n-title="expiry.title"></button>
+        <div class="menu" id="expiry-menu" hidden>
+          <p class="menu-label" data-i18n="expiry.label"></p>
+          <div class="menu-opts" id="expiry-opts"></div>
+          <hr>
+          <button type="button" class="danger-text" id="clear-btn" data-i18n="expiry.clear"></button>
+          <button type="button" class="danger-text" id="end-btn" data-i18n="expiry.end"></button>
+        </div>
+      </div>
+      <div class="menu-wrap">
+        <button type="button" class="ghost icon" id="settings-btn" aria-haspopup="true" aria-expanded="false" aria-controls="settings-menu" data-i18n-aria="settings.button" data-i18n-title="settings.button">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>
+        </button>
+        <div class="menu settings" id="settings-menu" hidden>
+          <p class="menu-label" data-i18n="settings.theme"></p>
+          <div class="theme-switch" role="group" data-i18n-aria="settings.theme">
+            <button type="button" data-theme-choice="system" data-i18n="settings.system"></button>
+            <button type="button" data-theme-choice="light" data-i18n="settings.light"></button>
+            <button type="button" data-theme-choice="dark" data-i18n="settings.dark"></button>
+          </div>
+          <p class="menu-label" data-i18n="settings.language"></p>
+          <select class="lang-select" data-i18n-aria="settings.language"></select>
+          <hr>
+          <a class="credit" href="https://sidebit.io" target="_blank" rel="noopener" data-i18n="credit"></a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="pinned wrap" id="pinned" aria-labelledby="pinned-title" hidden>
+    <div class="pinned-head">
+      <h2 class="pinned-title" id="pinned-title"></h2>
+      <button type="button" class="pinned-toggle" aria-expanded="true"></button>
+    </div>
+    <div class="pinned-body"></div>
+  </section>
+  <main class="feed wrap" id="feed"></main>
+  <div class="sr-only" id="announce" role="status" aria-live="polite"></div>
+  <div class="empty wrap" id="empty" hidden>
+    <p><strong data-i18n="room.empty"></strong> <span data-i18n="room.emptyHint"></span></p>
+  </div>
+
+  <footer class="composer">
+    <form class="wrap" id="compose-form" autocomplete="off">
+      <div class="reply-bar" id="reply-bar" hidden>
+        <span id="reply-text"></span>
+        <button type="button" id="reply-cancel" data-i18n-aria="reply.cancel" data-i18n-title="reply.cancel">&times;</button>
+      </div>
+      <textarea id="compose-text" rows="3" spellcheck="false" autocapitalize="off" autocorrect="off" data-i18n-placeholder="compose.placeholder" data-i18n-aria="compose.label"></textarea>
+      <div class="compose-row">
+        <select id="compose-lang" data-i18n-aria="compose.lang" data-i18n-title="compose.lang"></select>
+        <label class="as" for="compose-name" data-i18n="compose.as"></label>
+        <input id="compose-name" class="name-in" type="text" maxlength="40" data-i18n-placeholder="compose.name">
+        <label class="burn-opt" for="compose-burn"><input type="checkbox" id="compose-burn"> <span data-i18n="compose.burn"></span></label>
+        <span class="hint" id="compose-size"></span>
+        <div class="spacer"></div>
+        <button class="primary" type="submit" id="compose-send" data-i18n="compose.send"></button>
+      </div>
+    </form>
+  </footer>
+</div>
+
+<div class="confirm" id="confirm" hidden>
+  <div class="confirm-box card" role="dialog" aria-modal="true" aria-labelledby="confirm-text">
+    <p id="confirm-text"></p>
+    <div class="row end">
+      <button type="button" class="ghost" id="confirm-no" data-i18n="confirm.cancel"></button>
+      <button type="button" class="danger" id="confirm-yes"></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>

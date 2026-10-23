@@ -1,0 +1,45 @@
+{
+  "name": "pastepage",
+  "version": "0.1.0",
+  "description": "Paste text back and forth, live and end-to-end encrypted. Self-hosted.",
+  "type": "module",
+  "bin": {
+    "pastepage": "bin/pastepage.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "public/",
+    "deploy/",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "start": "node bin/pastepage.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "SideBit (https://sidebit.io)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sidebitio/pastepage.git"
+  },
+  "homepage": "https://github.com/sidebitio/pastepage#readme",
+  "bugs": {
+    "url": "https://github.com/sidebitio/pastepage/issues"
+  },
+  "keywords": [
+    "pastebin",
+    "paste",
+    "encrypted",
+    "e2ee",
+    "self-hosted",
+    "realtime",
+    "websocket"
+  ],
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

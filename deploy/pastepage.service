@@ -1,0 +1,41 @@
+# PastePage as a systemd service. Step-by-step instructions: docs/deployment.md
+#
+# Short version:
+#   1. Create the user it runs as:
+#        sudo useradd --system --no-create-home --shell /usr/sbin/nologin pastepage
+#   2. Set ExecStart below for your install route (npm or git).
+#   3. Copy this file to /etc/systemd/system/pastepage.service, then:
+#        sudo systemctl daemon-reload
+#        sudo systemctl enable --now pastepage
+#   4. Logs: sudo journalctl -u pastepage -f
+
+[Unit]
+Description=PastePage
+After=network.target
+
+[Service]
+User=pastepage
+Environment=PORT=3000
+Environment=HOST=127.0.0.1
+# Other settings from the README's configuration table go here, one per line, e.g.:
+# Environment=CREATE_PER_HOUR=10
+
+# Installed with "npm install -g pastepage": the full path that
+# "command -v pastepage" prints. systemd does not use your login shell's PATH.
+ExecStart=/usr/bin/pastepage
+
+# Installed with "git clone" into /opt/pastepage: use these two lines instead,
+# with the full path that "command -v node" prints.
+# WorkingDirectory=/opt/pastepage
+# ExecStart=/usr/bin/node /opt/pastepage/bin/pastepage.js
+
+Restart=on-failure
+
+# Hardening. PastePage keeps everything in memory and never writes files.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

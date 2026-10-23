@@ -1,0 +1,202 @@
+{
+  "start": {
+    "lede": "Plak tekst heen en weer, live. Wat je plakt, komt aan zoals je het plakte, inclusief regeleinden.",
+    "privacy": "Notities worden in je browser versleuteld voordat ze worden verstuurd, zodat de server ze alleen versleuteld bewaart, in het geheugen en nooit op schijf. Een sessie wordt verwijderd als iemand die beëindigt, als die verloopt of kort nadat iedereen is vertrokken.",
+    "title": "Nieuwe sessie",
+    "hint": "Je krijgt een willekeurige sessienaam en een willekeurig wachtwoord om naar de ander te sturen.",
+    "hours": "Alles verwijderen na",
+    "name": "Je naam",
+    "namePlaceholder": "Optioneel",
+    "go": "Nieuwe sessie starten",
+    "busy": "Starten…"
+  },
+  "join": {
+    "title": "Deelnemen aan een sessie",
+    "hint": "Gebruik de sessienaam en het wachtwoord die je hebt gekregen, of open de link.",
+    "id": "Sessienaam",
+    "idPlaceholder": "12-dancing-apes",
+    "pass": "Wachtwoord",
+    "go": "Deelnemen",
+    "busy": "Bezig met deelnemen…",
+    "badId": "Een sessienaam ziet eruit als 12-dancing-apes."
+  },
+  "gone": {
+    "title": "Deze sessie is beëindigd.",
+    "lede": "Iemand heeft de sessie beëindigd, iedereen is vertrokken, de sessie is verlopen of de server is opnieuw opgestart. De notities staan niet meer op de server.",
+    "home": "Terug naar de startpagina"
+  },
+  "room": {
+    "here": { "one": "{count} aanwezig", "other": "{count} aanwezig" },
+    "hereTitle": "Mensen die deze sessie open hebben",
+    "connecting": "Verbinden…",
+    "reconnecting": "Opnieuw verbinden…",
+    "newNote": "Nieuwe notitie van {name}",
+    "empty": "Nog geen notities.",
+    "emptyHint": "Plak hieronder iets, of plak gewoon ergens op deze pagina."
+  },
+  "invite": {
+    "button": "Uitnodigen",
+    "label": "Stuur dit naar de ander",
+    "linkPass": "Link met wachtwoord",
+    "link": "Link",
+    "id": "Sessie",
+    "pass": "Wachtwoord",
+    "copy": "Kopiëren",
+    "copyInvite": "Uitnodiging kopiëren",
+    "noPass": "Niet bewaard in dit tabblad",
+    "hint": "Wil je extra voorzichtig zijn? Stuur dan de link zonder wachtwoord, en het wachtwoord via een ander kanaal.",
+    "text": "Doe mee op {app}:\n{link}\n\nOf open {base} en vul in\nSessie: {id}\nWachtwoord: {pass}",
+    "copied": {
+      "linkPass": "Link met wachtwoord gekopieerd.",
+      "link": "Link gekopieerd.",
+      "id": "Sessienaam gekopieerd.",
+      "pass": "Wachtwoord gekopieerd.",
+      "invite": "Uitnodiging gekopieerd."
+    }
+  },
+  "expiry": {
+    "button": "Verlooptijd",
+    "title": "Wijzig wanneer deze sessie wordt verwijderd",
+    "in": "Wordt verwijderd over {time}",
+    "label": "Alles verwijderen over",
+    "set": "Alles wordt over {time} verwijderd.",
+    "clear": "Alle notities wissen",
+    "end": "Sessie beëindigen en verwijderen"
+  },
+  "time": {
+    "d": "{d} d",
+    "hm": "{h} u {m} min",
+    "m": "{m} min"
+  },
+  "hours": {
+    "1": "1 uur",
+    "8": "8 uur",
+    "24": "24 uur",
+    "72": "3 dagen",
+    "168": "7 dagen"
+  },
+  "hoursShort": {
+    "1": "1 u",
+    "8": "8 u",
+    "24": "24 u",
+    "72": "3 d",
+    "168": "7 d"
+  },
+  "confirm": {
+    "cancel": "Annuleren",
+    "clear": {
+      "one": "De enige notitie wissen? Die verdwijnt voor iedereen in deze sessie.",
+      "other": "Alle {count} notities wissen? Ze verdwijnen voor iedereen in deze sessie."
+    },
+    "clearYes": "Alles wissen",
+    "end": "Deze sessie beëindigen? Alle notities worden van de server verwijderd en de link werkt voor niemand meer.",
+    "endYes": "Sessie beëindigen"
+  },
+  "toast": {
+    "deleted": "Notitie voor iedereen verwijderd.",
+    "cleared": "Alle notities gewist.",
+    "nothingToClear": "Er zijn geen notities om te wissen."
+  },
+  "note": {
+    "anon": "Anoniem",
+    "you": "{name} (jij)",
+    "unreadable": "Onleesbare notitie",
+    "plain": "Platte tekst",
+    "lines": { "one": "{count} regel", "other": "{count} regels" },
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd",
+    "wrap": "Regels afbreken",
+    "noWrap": "Niet afbreken",
+    "wrapTitle": "Lange regels afbreken (alleen weergave)",
+    "delete": "Verwijderen",
+    "showAll": { "one": "{count} regel tonen", "other": "Alle {count} regels tonen" },
+    "showLess": "Minder tonen",
+    "reply": "Beantwoorden",
+    "pin": "Vastzetten",
+    "unpin": "Losmaken"
+  },
+  "reply": {
+    "to": "Antwoord op {name} · {lang} · {lines}",
+    "strip": "↪ {name} · {lang} · {lines}",
+    "deleted": "↪ De oorspronkelijke notitie is verwijderd",
+    "cancel": "Antwoord annuleren",
+    "jump": "Naar de oorspronkelijke notitie"
+  },
+  "react": {
+    "add": "Reactie toevoegen",
+    "pick": "Kies een reactie",
+    "chip": "{emoji} {count}: {names}"
+  },
+  "pin": {
+    "title": "Vastgezet ({count})",
+    "hide": "Verbergen",
+    "show": "Tonen",
+    "jump": "Naar deze notitie",
+    "showFirst": "Eerste {count} regels tonen",
+    "openFeed": "Openen in de lijst (alle {count} regels)"
+  },
+  "burn": {
+    "title": "Na lezen vernietigen",
+    "read": "Eén keer geopend en verwijderd.",
+    "readBy": "Gelezen door {name}, verwijderd.",
+    "waiting": "Wacht tot iemand de notitie leest.",
+    "open": "Openen en één keer lezen",
+    "opening": "Openen…",
+    "close": "Sluiten",
+    "reveal": "Tonen",
+    "hide": "Verbergen",
+    "gone": "Deze notitie is al geopend of verwijderd.",
+    "forbidden": "Je hebt deze notitie zelf verstuurd, dus je kunt die hier niet openen.",
+    "once": "Wordt maar één keer getoond. Na sluiten is de tekst weg.",
+    "hidden": "Verborgen tekst",
+    "new": "Nieuwe notitie die na lezen wordt vernietigd",
+    "opened": "Notitie geopend"
+  },
+  "size": {
+    "b": "{n} B",
+    "kb": "{n} KB",
+    "mb": "{n} MB"
+  },
+  "compose": {
+    "label": "Tekst van de notitie",
+    "placeholder": "Plak of typ hier. Ctrl+Enter of Cmd+Enter verstuurt.",
+    "lang": "Syntaxiskleuring",
+    "detect": "Automatisch",
+    "plain": "Platte tekst",
+    "common": "Veelgebruikt",
+    "all": "Alle talen",
+    "as": "Als",
+    "burn": "Na lezen vernietigen",
+    "name": "Je naam",
+    "size": "{lines} · {size}",
+    "send": "Versturen"
+  },
+  "settings": {
+    "button": "Instellingen",
+    "theme": "Thema",
+    "system": "Systeem",
+    "light": "Licht",
+    "dark": "Donker",
+    "language": "Taal"
+  },
+  "credit": "Gemaakt door SideBit",
+  "error": {
+    "BAD_REQUEST": "De server kon dit verzoek niet verwerken.",
+    "NOT_FOUND": "Geen sessie met die naam en dat wachtwoord.",
+    "LOCKED": "Te veel verkeerde pogingen vanaf je netwerk. Probeer het later opnieuw.",
+    "RATE_LIMITED": "Te veel nieuwe sessies vanaf je netwerk. Probeer het later opnieuw.",
+    "TAKEN": "Die sessienaam is al in gebruik. Probeer het opnieuw.",
+    "TOO_LARGE": "Dit is te groot om te versturen.",
+    "SESSION_FULL": "Deze sessie is vol. Wis alle notities om ruimte te maken.",
+    "SERVER_FULL": "De server is op dit moment vol. Probeer het later opnieuw.",
+    "GONE": "Die notitie is er al niet meer.",
+    "FORBIDDEN": "Je kunt een notitie die je zelf hebt verstuurd niet openen.",
+    "METHOD": "De server kon dit verzoek niet verwerken.",
+    "INSECURE": "Deze pagina moet via HTTPS (of op localhost) worden geopend. Via gewone http is versleuteling niet beschikbaar.",
+    "INTERNAL": "Er ging iets mis op de server. Probeer het opnieuw.",
+    "CONNECTION": "Geen verbinding met de server. Controleer je verbinding en probeer het opnieuw.",
+    "BUSY": "Deze sessie of server is op dit moment druk. Opnieuw proberen…",
+    "COPY_BLOCKED": "Kopiëren is door de browser geblokkeerd. Selecteer de tekst en kopieer die zelf.",
+    "DECRYPT": "Deze notitie kon niet worden ontsleuteld."
+  }
+}

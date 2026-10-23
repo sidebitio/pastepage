@@ -1,0 +1,202 @@
+{
+  "start": {
+    "lede": "Text einfügen und live hin- und herschicken. Was du einfügst, kommt so an, wie du es eingefügt hast, samt Zeilenenden.",
+    "privacy": "Notizen werden in deinem Browser verschlüsselt, bevor sie gesendet werden. Der Server bekommt sie also nur verschlüsselt und hält sie im Arbeitsspeicher, nie auf der Festplatte. Eine Sitzung wird gelöscht, wenn jemand sie beendet, wenn sie abläuft oder kurz nachdem alle gegangen sind.",
+    "title": "Neue Sitzung",
+    "hint": "Du bekommst einen zufälligen Sitzungsnamen und ein zufälliges Passwort, die du der anderen Person schickst.",
+    "hours": "Alles löschen nach",
+    "name": "Dein Name",
+    "namePlaceholder": "Optional",
+    "go": "Neue Sitzung starten",
+    "busy": "Wird gestartet…"
+  },
+  "join": {
+    "title": "Einer Sitzung beitreten",
+    "hint": "Gib den Sitzungsnamen und das Passwort ein, die du bekommen hast, oder öffne den Link.",
+    "id": "Sitzungsname",
+    "idPlaceholder": "12-dancing-apes",
+    "pass": "Passwort",
+    "go": "Beitreten",
+    "busy": "Wird beigetreten…",
+    "badId": "Ein Sitzungsname sieht so aus: 12-dancing-apes."
+  },
+  "gone": {
+    "title": "Diese Sitzung ist beendet.",
+    "lede": "Jemand hat sie beendet, alle sind gegangen, sie ist abgelaufen oder der Server wurde neu gestartet. Die Notizen dieser Sitzung sind nicht mehr auf dem Server.",
+    "home": "Zurück zur Startseite"
+  },
+  "room": {
+    "here": { "one": "{count} anwesend", "other": "{count} anwesend" },
+    "hereTitle": "Personen, die diese Sitzung geöffnet haben",
+    "connecting": "Verbindung wird hergestellt…",
+    "reconnecting": "Verbindung wird wiederhergestellt…",
+    "newNote": "Neue Notiz von {name}",
+    "empty": "Noch keine Notizen.",
+    "emptyHint": "Füge unten etwas ein oder einfach irgendwo auf dieser Seite."
+  },
+  "invite": {
+    "button": "Einladen",
+    "label": "Schick das der anderen Person",
+    "linkPass": "Link mit Passwort",
+    "link": "Link",
+    "id": "Sitzung",
+    "pass": "Passwort",
+    "copy": "Kopieren",
+    "copyInvite": "Einladung kopieren",
+    "noPass": "In diesem Tab nicht gespeichert",
+    "hint": "Wenn du ganz sichergehen willst, schick den Link ohne Passwort und das Passwort über einen anderen Kanal.",
+    "text": "Komm dazu auf {app}:\n{link}\n\nOder öffne {base} und gib ein\nSitzung: {id}\nPasswort: {pass}",
+    "copied": {
+      "linkPass": "Link mit Passwort kopiert.",
+      "link": "Link kopiert.",
+      "id": "Sitzungsname kopiert.",
+      "pass": "Passwort kopiert.",
+      "invite": "Einladung kopiert."
+    }
+  },
+  "expiry": {
+    "button": "Ablauf",
+    "title": "Ändern, wann diese Sitzung gelöscht wird",
+    "in": "Löschung in {time}",
+    "label": "Alles löschen in",
+    "set": "Alles wird in {time} gelöscht.",
+    "clear": "Alle Notizen löschen",
+    "end": "Sitzung beenden und löschen"
+  },
+  "time": {
+    "d": "{d} Tg.",
+    "hm": "{h} Std. {m} Min.",
+    "m": "{m} Min."
+  },
+  "hours": {
+    "1": "1 Stunde",
+    "8": "8 Stunden",
+    "24": "24 Stunden",
+    "72": "3 Tagen",
+    "168": "7 Tagen"
+  },
+  "hoursShort": {
+    "1": "1 Std.",
+    "8": "8 Std.",
+    "24": "24 Std.",
+    "72": "3 Tg.",
+    "168": "7 Tg."
+  },
+  "confirm": {
+    "cancel": "Abbrechen",
+    "clear": {
+      "one": "Die einzige Notiz löschen? Sie verschwindet für alle in dieser Sitzung.",
+      "other": "Alle {count} Notizen löschen? Sie verschwinden für alle in dieser Sitzung."
+    },
+    "clearYes": "Alle löschen",
+    "end": "Diese Sitzung beenden? Alle Notizen werden vom Server gelöscht und der Link funktioniert für niemanden mehr.",
+    "endYes": "Sitzung beenden"
+  },
+  "toast": {
+    "deleted": "Notiz für alle gelöscht.",
+    "cleared": "Alle Notizen gelöscht.",
+    "nothingToClear": "Es gibt keine Notizen zum Löschen."
+  },
+  "note": {
+    "anon": "Anonym",
+    "you": "{name} (du)",
+    "unreadable": "Unlesbare Notiz",
+    "plain": "Reiner Text",
+    "lines": { "one": "{count} Zeile", "other": "{count} Zeilen" },
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "wrap": "Umbrechen",
+    "noWrap": "Nicht umbrechen",
+    "wrapTitle": "Lange Zeilen umbrechen (nur Anzeige)",
+    "delete": "Löschen",
+    "showAll": { "one": "{count} Zeile anzeigen", "other": "Alle {count} Zeilen anzeigen" },
+    "showLess": "Weniger anzeigen",
+    "reply": "Antworten",
+    "pin": "Anheften",
+    "unpin": "Lösen"
+  },
+  "reply": {
+    "to": "Antwort an {name} · {lang} · {lines}",
+    "strip": "↪ {name} · {lang} · {lines}",
+    "deleted": "↪ Die ursprüngliche Notiz wurde gelöscht",
+    "cancel": "Antwort abbrechen",
+    "jump": "Zur ursprünglichen Notiz"
+  },
+  "react": {
+    "add": "Reaktion hinzufügen",
+    "pick": "Reaktion auswählen",
+    "chip": "{emoji} {count}: {names}"
+  },
+  "pin": {
+    "title": "Angeheftet ({count})",
+    "hide": "Ausblenden",
+    "show": "Einblenden",
+    "jump": "Zu dieser Notiz",
+    "showFirst": "Erste {count} Zeilen anzeigen",
+    "openFeed": "Im Verlauf öffnen (alle {count} Zeilen)"
+  },
+  "burn": {
+    "title": "Nach dem Lesen vernichten",
+    "read": "Einmal geöffnet und gelöscht.",
+    "readBy": "Von {name} gelesen, gelöscht.",
+    "waiting": "Wartet darauf, gelesen zu werden.",
+    "open": "Öffnen und einmal lesen",
+    "opening": "Wird geöffnet…",
+    "close": "Schließen",
+    "reveal": "Anzeigen",
+    "hide": "Verbergen",
+    "gone": "Diese Notiz wurde schon geöffnet oder gelöscht.",
+    "forbidden": "Du hast diese Notiz gesendet und kannst sie deshalb hier nicht öffnen.",
+    "once": "Nur einmal sichtbar. Sobald du sie schließt, ist sie weg.",
+    "hidden": "Verborgener Text",
+    "new": "Neue Notiz, die nach dem Lesen vernichtet wird",
+    "opened": "Notiz geöffnet"
+  },
+  "size": {
+    "b": "{n} B",
+    "kb": "{n} KB",
+    "mb": "{n} MB"
+  },
+  "compose": {
+    "label": "Text der Notiz",
+    "placeholder": "Hier einfügen oder tippen. Strg+Enter oder Cmd+Enter sendet.",
+    "lang": "Syntaxhervorhebung",
+    "detect": "Automatisch",
+    "plain": "Reiner Text",
+    "common": "Häufig",
+    "all": "Alle Sprachen",
+    "as": "Als",
+    "burn": "Nach dem Lesen vernichten",
+    "name": "Dein Name",
+    "size": "{lines} · {size}",
+    "send": "Senden"
+  },
+  "settings": {
+    "button": "Einstellungen",
+    "theme": "Design",
+    "system": "System",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "language": "Sprache"
+  },
+  "credit": "Erstellt von SideBit",
+  "error": {
+    "BAD_REQUEST": "Der Server konnte diese Anfrage nicht verarbeiten.",
+    "NOT_FOUND": "Keine Sitzung mit diesem Namen und Passwort.",
+    "LOCKED": "Zu viele Fehlversuche aus deinem Netzwerk. Versuch es später noch einmal.",
+    "RATE_LIMITED": "Zu viele neue Sitzungen aus deinem Netzwerk. Versuch es später noch einmal.",
+    "TAKEN": "Dieser Sitzungsname ist schon vergeben. Versuch es noch einmal.",
+    "TOO_LARGE": "Das ist zu groß zum Senden.",
+    "SESSION_FULL": "Diese Sitzung ist voll. Lösche alle Notizen, um Platz zu schaffen.",
+    "SERVER_FULL": "Der Server ist gerade voll. Versuch es später noch einmal.",
+    "GONE": "Diese Notiz gibt es nicht mehr.",
+    "FORBIDDEN": "Du kannst keine Notiz öffnen, die du selbst gesendet hast.",
+    "METHOD": "Der Server konnte diese Anfrage nicht verarbeiten.",
+    "INSECURE": "Diese Seite muss über HTTPS (oder auf localhost) geöffnet werden. Über einfaches http ist keine Verschlüsselung möglich.",
+    "INTERNAL": "Auf dem Server ist etwas schiefgelaufen. Versuch es noch einmal.",
+    "CONNECTION": "Keine Verbindung zum Server. Prüfe deine Verbindung und versuch es noch einmal.",
+    "BUSY": "Diese Sitzung oder der Server ist gerade ausgelastet. Wird erneut versucht…",
+    "COPY_BLOCKED": "Der Browser hat das Kopieren blockiert. Markiere den Text und kopiere ihn selbst.",
+    "DECRYPT": "Diese Notiz konnte nicht entschlüsselt werden."
+  }
+}

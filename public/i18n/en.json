@@ -1,0 +1,202 @@
+{
+  "start": {
+    "lede": "Paste text back and forth, live. What you paste arrives as you pasted it, line endings included.",
+    "privacy": "Notes are encrypted in your browser before they are sent, so the server only ever holds them encrypted, in memory, never on disk. A session is deleted when someone ends it, when it expires, or shortly after everyone has left.",
+    "title": "New session",
+    "hint": "You get a random session name and password to send to the other person.",
+    "hours": "Delete everything after",
+    "name": "Your name",
+    "namePlaceholder": "Optional",
+    "go": "Start new session",
+    "busy": "Starting…"
+  },
+  "join": {
+    "title": "Join a session",
+    "hint": "Use the session name and password you were sent, or open the link.",
+    "id": "Session name",
+    "idPlaceholder": "12-dancing-apes",
+    "pass": "Password",
+    "go": "Join session",
+    "busy": "Joining…",
+    "badId": "A session name looks like 12-dancing-apes."
+  },
+  "gone": {
+    "title": "This session has ended.",
+    "lede": "Someone ended it, everyone left, it expired, or the server restarted. Its notes are gone from the server.",
+    "home": "Back to the main page"
+  },
+  "room": {
+    "here": { "one": "{count} here", "other": "{count} here" },
+    "hereTitle": "People with this session open",
+    "connecting": "Connecting…",
+    "reconnecting": "Reconnecting…",
+    "newNote": "New note from {name}",
+    "empty": "No notes yet.",
+    "emptyHint": "Paste something below, or paste anywhere on this page."
+  },
+  "invite": {
+    "button": "Invite",
+    "label": "Send these to the other person",
+    "linkPass": "Link with password",
+    "link": "Link",
+    "id": "Session",
+    "pass": "Password",
+    "copy": "Copy",
+    "copyInvite": "Copy invite",
+    "noPass": "Not saved in this tab",
+    "hint": "To be extra careful, send the link without the password, and the password over a different channel.",
+    "text": "Join me on {app}:\n{link}\n\nOr open {base} and enter\nSession: {id}\nPassword: {pass}",
+    "copied": {
+      "linkPass": "Link with password copied.",
+      "link": "Link copied.",
+      "id": "Session name copied.",
+      "pass": "Password copied.",
+      "invite": "Invite copied."
+    }
+  },
+  "expiry": {
+    "button": "Expiry",
+    "title": "Change when this session is deleted",
+    "in": "Deletes in {time}",
+    "label": "Delete everything in",
+    "set": "Everything will be deleted in {time}.",
+    "clear": "Clear all notes",
+    "end": "End session and delete it"
+  },
+  "time": {
+    "d": "{d}d",
+    "hm": "{h}h {m}m",
+    "m": "{m}m"
+  },
+  "hours": {
+    "1": "1 hour",
+    "8": "8 hours",
+    "24": "24 hours",
+    "72": "3 days",
+    "168": "7 days"
+  },
+  "hoursShort": {
+    "1": "1h",
+    "8": "8h",
+    "24": "24h",
+    "72": "3d",
+    "168": "7d"
+  },
+  "confirm": {
+    "cancel": "Cancel",
+    "clear": {
+      "one": "Clear the only note? It disappears for everyone in this session.",
+      "other": "Clear all {count} notes? They disappear for everyone in this session."
+    },
+    "clearYes": "Clear all",
+    "end": "End this session? All notes are deleted from the server and the link stops working for everyone.",
+    "endYes": "End session"
+  },
+  "toast": {
+    "deleted": "Note deleted for everyone.",
+    "cleared": "All notes cleared.",
+    "nothingToClear": "There are no notes to clear."
+  },
+  "note": {
+    "anon": "Anonymous",
+    "you": "{name} (you)",
+    "unreadable": "Unreadable note",
+    "plain": "Plain text",
+    "lines": { "one": "{count} line", "other": "{count} lines" },
+    "copy": "Copy",
+    "copied": "Copied",
+    "wrap": "Wrap",
+    "noWrap": "No wrap",
+    "wrapTitle": "Wrap long lines (display only)",
+    "delete": "Delete",
+    "showAll": { "one": "Show all {count} line", "other": "Show all {count} lines" },
+    "showLess": "Show less",
+    "reply": "Reply",
+    "pin": "Pin",
+    "unpin": "Unpin"
+  },
+  "reply": {
+    "to": "Replying to {name} · {lang} · {lines}",
+    "strip": "↪ {name} · {lang} · {lines}",
+    "deleted": "↪ The original note was deleted",
+    "cancel": "Cancel reply",
+    "jump": "Go to the original note"
+  },
+  "react": {
+    "add": "Add reaction",
+    "pick": "Choose a reaction",
+    "chip": "{emoji} {count}: {names}"
+  },
+  "pin": {
+    "title": "Pinned ({count})",
+    "hide": "Hide",
+    "show": "Show",
+    "jump": "Go to this note",
+    "showFirst": "Show first {count} lines",
+    "openFeed": "Open in feed (all {count} lines)"
+  },
+  "burn": {
+    "title": "Burn after reading",
+    "read": "Opened once and deleted.",
+    "readBy": "Read by {name}, deleted.",
+    "waiting": "Waiting for someone to read it.",
+    "open": "Open and read once",
+    "opening": "Opening…",
+    "close": "Close",
+    "reveal": "Reveal",
+    "hide": "Hide",
+    "gone": "This note was already opened or deleted.",
+    "forbidden": "You sent this note, so you can't open it here.",
+    "once": "Shown once. Close it and it is gone.",
+    "hidden": "Hidden text",
+    "new": "New burn-after-reading note",
+    "opened": "Note opened"
+  },
+  "size": {
+    "b": "{n} B",
+    "kb": "{n} KB",
+    "mb": "{n} MB"
+  },
+  "compose": {
+    "label": "Note text",
+    "placeholder": "Paste or type here. Ctrl+Enter or Cmd+Enter sends.",
+    "lang": "Highlighting",
+    "detect": "Detect",
+    "plain": "Plain text",
+    "common": "Common",
+    "all": "All languages",
+    "as": "As",
+    "burn": "Burn after reading",
+    "name": "Your name",
+    "size": "{lines} · {size}",
+    "send": "Send"
+  },
+  "settings": {
+    "button": "Settings",
+    "theme": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language"
+  },
+  "credit": "Created by SideBit",
+  "error": {
+    "BAD_REQUEST": "The server could not handle this request.",
+    "NOT_FOUND": "No session with that name and password.",
+    "LOCKED": "Too many wrong attempts from your network. Try again later.",
+    "RATE_LIMITED": "Too many new sessions from your network. Try again later.",
+    "TAKEN": "That session name is already in use. Try again.",
+    "TOO_LARGE": "This is too large to send.",
+    "SESSION_FULL": "This session is full. Clear all notes to make room.",
+    "SERVER_FULL": "The server is full right now. Try again later.",
+    "GONE": "That note is already gone.",
+    "FORBIDDEN": "You can't open a note you sent yourself.",
+    "METHOD": "The server could not handle this request.",
+    "INSECURE": "This page must be opened over HTTPS (or on localhost). Encryption isn't available on plain http.",
+    "INTERNAL": "Something went wrong on the server. Try again.",
+    "CONNECTION": "No connection to the server. Check your connection and try again.",
+    "BUSY": "This session or server is busy right now. Trying again…",
+    "COPY_BLOCKED": "Copy was blocked by the browser. Select the text and copy it yourself.",
+    "DECRYPT": "This note could not be decrypted."
+  }
+}
