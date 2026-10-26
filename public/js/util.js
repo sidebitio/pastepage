@@ -109,3 +109,19 @@ export function button(className, text, onClick) {
   b.addEventListener('click', onClick);
   return b;
 }
+
+/**
+ * How far to scroll the window so an element stays at the same place on screen after the page changed height.
+ * @param {number} before the element's top (getBoundingClientRect) before the change
+ * @param {number} after its top after the change
+ * @returns {number} the amount to pass to window.scrollBy(0, ...)
+ */
+export const scrollDelta = (before, after) => after - before;
+
+/**
+ * Whether a note is folded behind "Show all": only a note with more lines than the limit.
+ * @param {number} lines the note's line count
+ * @param {number} limit the number of lines a folded note shows
+ * @returns {boolean}
+ */
+export const isFoldable = (lines, limit) => lines > limit;

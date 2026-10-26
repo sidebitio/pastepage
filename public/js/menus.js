@@ -10,6 +10,8 @@ export const HOURS = [1, 8, 24, 72, 168];
 export const THEMES = ['system', 'light', 'dark'];
 /** Width choices: "normal" keeps the column at its usual width, "wide" lets the session view use the full window. */
 export const WIDTHS = ['normal', 'wide'];
+/** Long-note choices: "fold" cuts notes over 28 lines behind "Show all", "full" always shows them in full. */
+export const FOLDS = ['fold', 'full'];
 /** UI languages offered in the picker, each by its own name. */
 const LANGUAGE_NAMES = { en: 'English', nl: 'Nederlands', de: 'Deutsch', fr: 'Français', es: 'Español', ja: '日本語' };
 const MENUS = ['invite', 'expiry', 'settings'];
@@ -200,6 +202,42 @@ function markWidth() {
   for (const b of document.querySelectorAll('[data-width-choice]')) b.setAttribute('aria-pressed', String(b.dataset.widthChoice === width));
 }
 
+/**
+ * Read a stored long-notes choice.
+ * @param {unknown} v the stored value
+ * @returns {'fold'|'full'} "full" only for exactly "full"; anything else is "fold"
+ */
+export function parseFold(v) {
+  return v === 'full' ? 'full' : 'fold';
+}
+
+/**
+ * The saved long-notes choice.
+ * @returns {'fold'|'full'}
+ */
+export function currentFold() {
+  return parseFold(storage.get('localStorage', 'fold'));
+}
+
+/**
+ * Apply and save a long-notes choice: "full" adds the class "full-notes" to <html>, which the stylesheet uses to lift the
+ * height limit and hide the Show all button of every note at once; "fold" removes it, so notes fold again as before.
+ * theme.js applies the saved choice on the next page load, before the first paint.
+ * @param {'fold'|'full'} choice
+ * @returns {void}
+ */
+export function applyFold(choice) {
+  const fold = parseFold(choice);
+  document.documentElement.classList.toggle('full-notes', fold === 'full');
+  storage.set('localStorage', 'fold', fold);
+  markFold();
+}
+
+function markFold() {
+  const fold = currentFold();
+  for (const b of document.querySelectorAll('[data-fold-choice]')) b.setAttribute('aria-pressed', String(b.dataset.foldChoice === fold));
+}
+
 /** Show the language in use in every language picker (settings menu, start and "session ended" footers). */
 function markLanguage() {
   for (const sel of document.querySelectorAll('.lang-select')) sel.value = currentLocale();
@@ -278,5 +316,9 @@ export function initMenus(o) {
     b.addEventListener('click', () => applyWidth(b.dataset.widthChoice));
   }
   markWidth();
+  for (const b of document.querySelectorAll('[data-fold-choice]')) {
+    b.addEventListener('click', () => applyFold(b.dataset.foldChoice));
+  }
+  markFold();
   initLanguages();
 }

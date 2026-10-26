@@ -162,7 +162,7 @@ h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03e
 .menu.invite .hint { margin: 10px 4px 2px; font-size: 12px; }
 .menu hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0 6px; }
 
-.feed { flex: 1; display: flex; flex-direction: column; gap: 14px; padding-block: 18px 24px; }
+.feed { flex: 1; display: flex; flex-direction: column; gap: 14px; padding-block: 18px 24px; overflow-anchor: none; }
 /* Wide view, chat style: your notes on the right, the others' on the left, with space beside them. */
 @media (min-width: 721px) {
   /* A little room at the window edges, so neither side's notes touch them. */
@@ -198,10 +198,18 @@ h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03e
 .note-actions .del:hover { color: var(--danger); background: var(--danger-soft); }
 
 .code {
-  display: flex; background: var(--code-bg); overflow: auto; max-height: 60vh;
-  font: 13px/1.6 var(--font-code); tab-size: 4;
+  display: flex; background: var(--code-bg); overflow: auto;
+  font: 13px/1.6 var(--font-code); --lh: 20.8px; tab-size: 4;
+  border-right: 12px solid var(--code-bg); /* a little room inside the right edge, so long lines don't touch it */
 }
-.note.expanded .code { max-height: none; }
+/* A long note is folded to its first --fold-lines lines (set from COLLAPSE_LINES in feed.js): no vertical scrolling,
+   a fade at the bottom, and the Show all button below. 12px is the top padding of the code box. */
+.note.foldable:not(.expanded) .code { max-height: calc(12px + var(--fold-lines) * var(--lh)); overflow-y: auto; }
+.note.foldable:not(.expanded) .more { position: relative; }
+.note.foldable:not(.expanded) .more::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 48px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--code-bg));
+}
 .gutter {
   user-select: none; -webkit-user-select: none; text-align: right; color: var(--gutter);
   padding: 12px 10px 12px 14px; border-right: 1px solid var(--line); white-space: pre;
@@ -211,6 +219,10 @@ h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03e
 .code pre code { font: inherit; }
 .note.wrap-lines .code pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .note.wrap-lines .gutter { display: none; }
+/* Long notes set to "Show in full" (a setting): no height limit, and no Show all / Show less button. */
+html.full-notes .note.foldable:not(.expanded) .code { max-height: none; overflow-y: auto; }
+html.full-notes .note.foldable .more::before { display: none; }
+html.full-notes .more { display: none; }
 .more {
   display: block; width: 100%; border: 0; border-top: 1px solid var(--line); background: var(--surface);
   padding: 7px; font-size: 13px; font-weight: 600; color: var(--muted);
@@ -357,3 +369,9 @@ button.reply-strip:hover { color: var(--ink); }
 }
 .reply-bar span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reply-bar button { border: 0; background: none; font-size: 18px; line-height: 1; padding: 2px 8px; color: var(--muted); }
+
+/* A long note's foot: reactions on the left, and while the note is open (expanded, or "Show in full") its buttons
+   on the right. While it is folded only the reactions show, exactly like any other note's reaction row. */
+.note-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 8px 8px 12px; border-top: 1px solid var(--line); font-size: 13px; }
+.note-foot .reactions { border-top: 0; padding: 0; }
+html:not(.full-notes) .note.foldable:not(.expanded) .note-foot .note-actions { display: none; }

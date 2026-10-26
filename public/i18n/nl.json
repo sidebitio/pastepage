@@ -180,7 +180,10 @@
     "language": "Taal",
     "width": "Breedte",
     "normal": "Normaal",
-    "wide": "Breed"
+    "wide": "Breed",
+    "longNotes": "Lange notities",
+    "fold": "Inklappen",
+    "full": "Volledig tonen"
   },
   "credit": "Gemaakt door SideBit",
   "error": {

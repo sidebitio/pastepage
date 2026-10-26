@@ -1,4 +1,4 @@
-// Applies the saved colour theme and width (wide or normal) before the first paint (a classic script in <head>, so no flash of the wrong theme).
+// Applies the saved colour theme, width (wide or normal) and long-notes choice (fold or full) before the first paint (a classic script in <head>, so no flash of the wrong theme).
 // "light" and "dark" set <html data-theme>; anything else (or nothing) follows the system setting.
 (function () {
   'use strict';
@@ -9,4 +9,7 @@
   var width = null;
   try { width = window.localStorage.getItem('pastepage-width'); } catch (e) { /* storage blocked */ }
   if (width === 'wide') document.documentElement.classList.add('wide');
+  var fold = null;
+  try { fold = window.localStorage.getItem('pastepage-fold'); } catch (e) { /* storage blocked */ }
+  if (fold === 'full') document.documentElement.classList.add('full-notes');
 })();

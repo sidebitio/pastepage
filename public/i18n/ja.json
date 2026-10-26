@@ -179,7 +179,10 @@
     "language": "言語",
     "width": "幅",
     "normal": "標準",
-    "wide": "ワイド"
+    "wide": "ワイド",
+    "longNotes": "長いノート",
+    "fold": "折りたたむ",
+    "full": "全文表示"
   },
   "credit": "制作：SideBit",
   "error": {

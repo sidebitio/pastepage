@@ -180,7 +180,10 @@
     "language": "Langue",
     "width": "Largeur",
     "normal": "Normale",
-    "wide": "Large"
+    "wide": "Large",
+    "longNotes": "Notes longues",
+    "fold": "Replier",
+    "full": "Tout afficher"
   },
   "credit": "Créé par SideBit",
   "error": {

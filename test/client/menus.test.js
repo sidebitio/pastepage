@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { describeExpiry, parseWidth, WIDTHS } from '../../public/js/menus.js';
+import { describeExpiry, parseWidth, WIDTHS, parseFold, FOLDS } from '../../public/js/menus.js';
 
 const en = JSON.parse(readFileSync(new URL('../../public/i18n/en.json', import.meta.url), 'utf8'));
 /** A small English translator: looks up the key and fills in {placeholders}. */
@@ -26,4 +26,11 @@ test('width: only "wide" is wide; missing or invalid stored values mean normal',
   assert.equal(parseWidth('normal'), 'normal');
   for (const v of [null, undefined, '', 'Wide', 'WIDE', ' wide', 'full', 'system', 1, {}]) assert.equal(parseWidth(v), 'normal');
   assert.deepEqual(WIDTHS, ['normal', 'wide']);
+});
+
+test('long notes: only "full" shows in full; missing or invalid stored values mean fold', () => {
+  assert.equal(parseFold('full'), 'full');
+  assert.equal(parseFold('fold'), 'fold');
+  for (const v of [null, undefined, '', 'Full', 'FULL', ' full', 'wide', 'none', 1, {}]) assert.equal(parseFold(v), 'fold');
+  assert.deepEqual(FOLDS, ['fold', 'full']);
 });

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - A Width setting (Normal or Wide) in the settings menu: Wide lets the session view use the full window width, so code lines have more room. The choice is remembered in the browser.
+- A Long notes setting (Fold or Show in full) in the settings menu: notes over 28 lines are folded behind "Show all" by default, and "Show in full" shows them completely. It applies at once to every note on screen and is remembered in the browser.
 
 ## [0.1.0] - 2026-10-23
 

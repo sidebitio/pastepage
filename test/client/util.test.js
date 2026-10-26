@@ -31,3 +31,17 @@ test('displayText shows CR and CRLF line endings as line breaks, and changes not
   assert.equal(displayText('  tabs\tand spaces  \n'), '  tabs\tand spaces  \n');
   assert.equal(displayText(''), '');
 });
+
+test('fold: only notes longer than the limit are folded', async () => {
+  const { isFoldable } = await import('../../public/js/util.js');
+  assert.equal(isFoldable(28, 28), false);
+  assert.equal(isFoldable(29, 28), true);
+  assert.equal(isFoldable(1, 28), false);
+});
+
+test('scroll: the window moves by how far the element moved', async () => {
+  const { scrollDelta } = await import('../../public/js/util.js');
+  assert.equal(scrollDelta(300, 300), 0);
+  assert.equal(scrollDelta(300, 1200), 900);
+  assert.equal(scrollDelta(1200, 300), -900);
+});

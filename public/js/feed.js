@@ -2,7 +2,7 @@
 // highlights the notes that are new, and removes the ones that are gone. Existing notes are never re-highlighted.
 import { lineCount, noteList } from './state.js';
 import { currentLocale, formatTime } from './i18n.js';
-import { button, capName, detectHighlight, displayText, fmtBytes, langName, make } from './util.js';
+import { button, capName, detectHighlight, displayText, fmtBytes, isFoldable, langName, make, scrollDelta } from './util.js';
 import {
   pinButton, reactionRow, relabelReactions, relabelReply, renderPinned, resetExtras, setLabel, setPinned, updateReactions,
   updateReply,
@@ -172,21 +172,35 @@ export function noteEl(view, ctx, state) {
   const label = highlight(code, displayText(text), view.lang || 'auto'); // shown with every line ending as a break
   setLabel(view.seq, label);
 
-  const wrap = button('', '', () => {
-    const on = el.classList.toggle('wrap-lines');
-    wrap.textContent = t(on ? 'note.noWrap' : 'note.wrap');
-  });
-  const del = button('del', '', () => ctx.actions.del(view.seq));
+  // The Wrap and Copy buttons can appear twice (see the foot buttons below), so their labels are set for every copy.
+  const wraps = [];
+  const copies = [];
+  const replies = [];
+  const dels = [];
+  const wrapLabel = () => { for (const b of wraps) b.textContent = t(el.classList.contains('wrap-lines') ? 'note.noWrap' : 'note.wrap'); };
+  const copyLabel = () => { for (const b of copies) { b.textContent = t(b.classList.contains('done') ? 'note.copied' : 'note.copy'); } };
+  const toggleWrap = () => { el.classList.toggle('wrap-lines'); wrapLabel(); };
   let resetTimer;
-  const copy = button('copy', '', async () => {
+  const doCopy = async () => {
     if (!(await ctx.actions.copy(text, code))) return;
-    copy.textContent = t('note.copied');
-    copy.classList.add('done');
+    for (const b of copies) b.classList.add('done');
+    copyLabel();
     clearTimeout(resetTimer);
-    resetTimer = setTimeout(() => { copy.textContent = t('note.copy'); copy.classList.remove('done'); }, 1500);
-  });
-  const reply = button('reply', '', () => ctx.actions.reply(view.seq));
-  actions.append(reply, pinButton(view, ctx), wrap, del, copy);
+    resetTimer = setTimeout(() => { for (const b of copies) b.classList.remove('done'); copyLabel(); }, 1500);
+  };
+  const makeActions = () => {
+    const wrap = button('', '', toggleWrap);
+    wrap.title = t('note.wrapTitle');
+    const copy = button('copy', '', doCopy);
+    const reply = button('reply', '', () => ctx.actions.reply(view.seq));
+    const del = button('del', '', () => ctx.actions.del(view.seq));
+    wraps.push(wrap);
+    copies.push(copy);
+    replies.push(reply);
+    dels.push(del);
+    return [reply, pinButton(view, ctx), wrap, del, copy];
+  };
+  actions.append(...makeActions());
   el.dataset.replySig = '';
   updateReply(el, state, view, ctx);
 
@@ -199,12 +213,30 @@ export function noteEl(view, ctx, state) {
   el.append(box);
 
   let more = null;
-  if (lines > COLLAPSE_LINES) {
+  if (isFoldable(lines, COLLAPSE_LINES)) {
+    // The fold height comes from this one number (see .foldable in style.css), so it is not repeated in the CSS.
+    el.classList.add('foldable');
+    el.style.setProperty('--fold-lines', String(COLLAPSE_LINES));
     more = button('more', '', () => {
+      // Keep the button where it is on screen: the page changes height above or below it.
+      const before = more.getBoundingClientRect().top;
       const on = el.classList.toggle('expanded');
       more.textContent = on ? t('note.showLess') : t('note.showAll', { count: lines });
+      const d = scrollDelta(before, more.getBoundingClientRect().top);
+      if (d) window.scrollBy(0, d);
     });
     el.append(more);
+  }
+  // A long note's foot is one line: its reactions on the left and, while the note is open (expanded or
+  // "Show in full"), its buttons on the right, so nobody has to scroll back up to reply, pin, wrap, delete or copy.
+  // While it is folded only the reactions show, like any other note's reaction row.
+  let foot = null;
+  if (more) {
+    foot = make('div', 'note-foot');
+    const footActions = make('div', 'note-actions');
+    footActions.append(...makeActions());
+    foot.append(reactionRow(state, view.seq, ctx), footActions);
+    el.append(foot);
   }
 
   /** Write the card's texts in the current language: name, meta line, buttons. The code box is left alone. */
@@ -213,16 +245,16 @@ export function noteEl(view, ctx, state) {
     who.textContent = view.mine ? t('note.you', { name }) : name;
     meta.replaceChildren(formatTime(view.ts) + ' · ', make('b', '', label || t('note.plain')),
       make('span', 'lines', ' · ' + t('note.lines', { count: lines })), ' · ' + fmtBytes(bytes, t));
-    reply.textContent = t('note.reply');
-    wrap.textContent = t(el.classList.contains('wrap-lines') ? 'note.noWrap' : 'note.wrap');
-    wrap.title = t('note.wrapTitle');
-    del.textContent = t('note.delete');
-    copy.textContent = t(copy.classList.contains('done') ? 'note.copied' : 'note.copy');
+    for (const b of replies) b.textContent = t('note.reply');
+    for (const b of dels) b.textContent = t('note.delete');
+    for (const b of wraps) b.title = t('note.wrapTitle');
+    wrapLabel();
+    copyLabel();
     if (more) more.textContent = el.classList.contains('expanded') ? t('note.showLess') : t('note.showAll', { count: lines });
   };
   paint();
   relabelers.set(el, paint);
-  el.append(reactionRow(state, view.seq, ctx));
+  if (!foot) el.append(reactionRow(state, view.seq, ctx));
   return el;
 }
 
@@ -257,20 +289,18 @@ function restoreFocus(el, seq, old, ctx) {
 /** Write an existing note card's texts again in the current language (never re-highlights). */
 function relabelNoteEl(el, view, state, ctx) {
   relabelers.get(el)?.();
-  const pin = el.querySelector('.pin-btn');
-  if (pin) setPinned(pin, Boolean(view.pinned), ctx);
+  for (const pin of el.querySelectorAll('.pin-btn')) setPinned(pin, Boolean(view.pinned), ctx);
   relabelReply(el, state, view, ctx);
-  const row = el.querySelector(':scope > .reactions');
+  const row = el.querySelector(':scope > .reactions, :scope > .note-foot > .reactions');
   if (row) relabelReactions(row, state, view.seq, ctx);
 }
 
 /** Update the parts of an existing card that can change without rebuilding it (never re-highlights). */
 function updateNoteEl(el, view, state, ctx) {
   el.classList.toggle('pinned', Boolean(view.pinned));
-  const pin = el.querySelector('.pin-btn');
-  if (pin && pin.dataset.pinned !== (view.pinned ? '1' : '0')) setPinned(pin, Boolean(view.pinned), ctx);
+  for (const pin of el.querySelectorAll('.pin-btn')) if (pin.dataset.pinned !== (view.pinned ? '1' : '0')) setPinned(pin, Boolean(view.pinned), ctx);
   updateReply(el, state, view, ctx);
-  const row = el.querySelector(':scope > .reactions');
+  const row = el.querySelector(':scope > .reactions, :scope > .note-foot > .reactions');
   if (row) updateReactions(row, state, view.seq, ctx);
 }
 
