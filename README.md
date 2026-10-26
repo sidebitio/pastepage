@@ -14,7 +14,7 @@ PastePage is a small self-hosted web app: you run it on your own server, next to
 - **Replies, reactions and pins.** Reply to a note, react with 👍 ❤️ 😂 🎉 👀 ✅, pin the notes that matter.
 - **Burn after reading.** A note that the first other person can open once, after which it is deleted for everyone.
 - **You decide when it's gone.** Sessions are deleted after 1 hour to 7 days (24 hours by default), when someone ends them, or roughly 2-3 minutes after the last person leaves.
-- **Light and dark themes**, and six languages: English, Nederlands, Deutsch, Français, Español and 日本語.
+- **Light and dark themes, a wide view** that uses the full window width, and six languages: English, Nederlands, Deutsch, Français, Español and 日本語.
 - **Loads nothing from other sites**: no CDNs, web fonts, analytics or trackers.
 
 ## How it works, and what the server can see

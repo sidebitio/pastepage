@@ -177,7 +177,10 @@
     "system": "Systeem",
     "light": "Licht",
     "dark": "Donker",
-    "language": "Taal"
+    "language": "Taal",
+    "width": "Breedte",
+    "normal": "Normaal",
+    "wide": "Breed"
   },
   "credit": "Gemaakt door SideBit",
   "error": {

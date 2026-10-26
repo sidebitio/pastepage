@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- A Width setting (Normal or Wide) in the settings menu: Wide lets the session view use the full window width, so code lines have more room. The choice is remembered in the browser.
+
 ## [0.1.0] - 2026-10-23
 
 The first public release.

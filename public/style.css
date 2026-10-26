@@ -73,6 +73,8 @@ code { font-family: var(--font-code); font-size: .9em; }
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .wrap.narrow { max-width: 560px; }
+/* Wide view (a setting): the session view uses the full window width; the start and "session ended" pages keep their width. */
+html.wide #view-room .wrap { max-width: none; }
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
 .cards h2 { margin: 0; font-size: 18px; letter-spacing: -.01em; }
 .cards .hint { margin-bottom: 6px; }
@@ -161,6 +163,16 @@ h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03e
 .menu hr { border: 0; border-top: 1px solid var(--line); margin: 10px 0 6px; }
 
 .feed { flex: 1; display: flex; flex-direction: column; gap: 14px; padding-block: 18px 24px; }
+/* Wide view, chat style: your notes on the right, the others' on the left, with space beside them. */
+@media (min-width: 721px) {
+  /* A little room at the window edges, so neither side's notes touch them. */
+  html.wide #view-room .wrap { padding-left: max(40px, env(safe-area-inset-left, 0px)); padding-right: max(40px, env(safe-area-inset-right, 0px)); }
+  html.wide .feed > .note { width: 85%; align-self: flex-start; }
+  html.wide .feed > .note.mine { align-self: flex-end; }
+  /* The message box spans only what both columns share: from where your notes start to where the others' end. */
+  /* The form is the page column itself (.wrap: 40px side padding); 15% of the window minus 15% of those 80px lands on the note edges. */
+  html.wide #view-room .composer form { padding-left: calc(15% + 28px); padding-right: calc(15% + 28px); }
+}
 .empty { flex: 1; color: var(--muted); padding-block: 40px; text-align: center; }
 
 .note {

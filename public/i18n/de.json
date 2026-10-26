@@ -177,7 +177,10 @@
     "system": "System",
     "light": "Hell",
     "dark": "Dunkel",
-    "language": "Sprache"
+    "language": "Sprache",
+    "width": "Breite",
+    "normal": "Normal",
+    "wide": "Breit"
   },
   "credit": "Erstellt von SideBit",
   "error": {

@@ -177,7 +177,10 @@
     "system": "Sistema",
     "light": "Claro",
     "dark": "Oscuro",
-    "language": "Idioma"
+    "language": "Idioma",
+    "width": "Ancho",
+    "normal": "Normal",
+    "wide": "Amplio"
   },
   "credit": "Creado por SideBit",
   "error": {

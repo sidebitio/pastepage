@@ -8,6 +8,8 @@ import { LOCALES, currentLocale } from './i18n.js';
 export const HOURS = [1, 8, 24, 72, 168];
 /** Theme choices; "system" follows the operating system setting. */
 export const THEMES = ['system', 'light', 'dark'];
+/** Width choices: "normal" keeps the column at its usual width, "wide" lets the session view use the full window. */
+export const WIDTHS = ['normal', 'wide'];
 /** UI languages offered in the picker, each by its own name. */
 const LANGUAGE_NAMES = { en: 'English', nl: 'Nederlands', de: 'Deutsch', fr: 'Français', es: 'Español', ja: '日本語' };
 const MENUS = ['invite', 'expiry', 'settings'];
@@ -163,6 +165,41 @@ function markTheme() {
   for (const b of document.querySelectorAll('[data-theme-choice]')) b.setAttribute('aria-pressed', String(b.dataset.themeChoice === theme));
 }
 
+/**
+ * Read a stored width choice.
+ * @param {unknown} v the stored value
+ * @returns {'normal'|'wide'} "wide" only for exactly "wide"; anything else is "normal"
+ */
+export function parseWidth(v) {
+  return v === 'wide' ? 'wide' : 'normal';
+}
+
+/**
+ * The saved width choice.
+ * @returns {'normal'|'wide'}
+ */
+export function currentWidth() {
+  return parseWidth(storage.get('localStorage', 'width'));
+}
+
+/**
+ * Apply and save a width: wide adds the class "wide" to <html>, normal removes it.
+ * theme.js applies the saved choice on the next page load, before the first paint.
+ * @param {'normal'|'wide'} choice
+ * @returns {void}
+ */
+export function applyWidth(choice) {
+  const width = parseWidth(choice);
+  document.documentElement.classList.toggle('wide', width === 'wide');
+  storage.set('localStorage', 'width', width);
+  markWidth();
+}
+
+function markWidth() {
+  const width = currentWidth();
+  for (const b of document.querySelectorAll('[data-width-choice]')) b.setAttribute('aria-pressed', String(b.dataset.widthChoice === width));
+}
+
 /** Show the language in use in every language picker (settings menu, start and "session ended" footers). */
 function markLanguage() {
   for (const sel of document.querySelectorAll('.lang-select')) sel.value = currentLocale();
@@ -237,5 +274,9 @@ export function initMenus(o) {
     b.addEventListener('click', () => applyTheme(b.dataset.themeChoice));
   }
   markTheme();
+  for (const b of document.querySelectorAll('[data-width-choice]')) {
+    b.addEventListener('click', () => applyWidth(b.dataset.widthChoice));
+  }
+  markWidth();
   initLanguages();
 }

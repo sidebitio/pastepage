@@ -176,7 +176,10 @@
     "system": "システム",
     "light": "ライト",
     "dark": "ダーク",
-    "language": "言語"
+    "language": "言語",
+    "width": "幅",
+    "normal": "標準",
+    "wide": "ワイド"
   },
   "credit": "制作：SideBit",
   "error": {
