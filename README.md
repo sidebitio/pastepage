@@ -1,10 +1,12 @@
 # PastePage
 
-Paste text back and forth between two (or a few) people, live. What you paste arrives exactly as pasted, including Windows line endings, and it is encrypted in your browser before it leaves your computer.
+Paste text and screenshots back and forth between two (or a few) people, live. What you paste arrives exactly as pasted, including Windows line endings, and it is encrypted in your browser before it leaves your computer.
 
 PastePage is a small self-hosted web app: you run it on your own server, next to your other websites. There are no accounts and no database. Sessions live only in the server's memory and disappear when everyone has left.
 
-![Two people in a PastePage session: Ada pasted an SQL query, Linus replied with the result, and Ada reacted with 🎉](docs/screenshot.png)
+![Demo: Ada opens PastePage, pastes an SQL query and sends it, which makes a session; Linus joins with the link and replies with a screenshot of a chart; Ada reacts with 🎉](docs/demo.gif)
+
+**Try it:** [live demo](https://demo.pastepage.sidebit.io) (sessions last at most an hour, notes up to 100 KB) · [website](https://pastepage.sidebit.io) · [npm](https://www.npmjs.com/package/pastepage)
 
 ## Features
 
