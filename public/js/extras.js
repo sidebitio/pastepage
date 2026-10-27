@@ -4,6 +4,7 @@
 import { PIN_PREVIEW_LINES, REACTIONS, lineCount, pinnedList, reactionsFor, replyInfo } from './state.js';
 import { currentLocale, formatTime } from './i18n.js';
 import { button, capName, displayText, make } from './util.js';
+import { dataUrl } from './image.js';
 
 /** An expanded pinned entry shows at most this many lines; the full note is in the feed ("Open in feed"). */
 const PIN_EXPANDED_LINES = 200;
@@ -58,27 +59,35 @@ export function jumpTo(seq) {
  * What the reply strip depends on: only whether the original still exists (cheap: no line count of the original).
  * @param {object} state the state from state.js
  * @param {object} view the reply's NoteView
- * @returns {string} '' for a note that is not a reply, 'y' when the original exists, 'n' when it is gone
+ * @returns {string} '' for a note that is not a reply, 'y' when the original exists, 'g' when it is gone at or
+ *   before the session's rolled-off point, 'n' when it was deleted
  */
-export const replySig = (state, view) => (view.replyTo === null ? '' : state.notes.has(view.replyTo) ? 'y' : 'n');
+export const replySig = (state, view) => {
+  if (view.replyTo === null) return '';
+  if (state.notes.has(view.replyTo)) return 'y';
+  return view.replyTo <= state.rolledSeq ? 'g' : 'n';
+};
 
 /**
  * The strip above a reply, or null for a note that is not a reply.
  * @param {object} state the state from state.js
  * @param {object} view the reply's NoteView
  * @param {{t: Function}} ctx shared context
- * @returns {HTMLElement|null} a jump button, or a plain note when the original was deleted
+ * @returns {HTMLElement|null} a jump button, or a plain note when the original was deleted or rolled off
  */
 export function replyStrip(state, view, ctx) {
   if (view.replyTo === null) return null;
   const { t } = ctx;
   const info = replyInfo(state, view.replyTo);
   if (!info.exists) {
-    const gone = make('div', 'reply-strip gone', t('reply.deleted'));
-    return gone;
+    // Up to the session's rolled-off point the original may have rolled off (or been deleted before): it is no
+    // longer available. Past that point it can only have been deleted.
+    const text = view.replyTo <= state.rolledSeq ? '↪ ' + t('reply.gone') : t('reply.deleted');
+    return make('div', 'reply-strip gone', text);
   }
-  const text = t('reply.strip', {
-    name: capName(info.name) || t('note.anon'),
+  const name = capName(info.name) || t('note.anon');
+  const text = info.image ? t('reply.stripImage', { name, size: `${info.image.w}×${info.image.h}` }) : t('reply.strip', {
+    name,
     lang: labelOf(view.replyTo) || t('note.plain'),
     lines: t('note.lines', { count: info.lines }),
   });
@@ -275,7 +284,42 @@ export function setPinned(b, pinned, ctx) {
 
 /* ---------- pinned strip ---------- */
 
+/** A pinned image note: a small thumbnail and the caption's first line, both going to the note in the feed. */
+function imageEntryEl(view, ctx) {
+  const { t } = ctx;
+  const el = make('article', 'pin-entry pin-image');
+  const head = button('pin-head', '', () => jumpTo(view.seq));
+  const who = make('b', '');
+  const meta = make('span', 'meta');
+  head.append(who, meta);
+  // The head is the keyboard way to the note; the thumbnail row is a larger target for the mouse, not a second tab stop.
+  const row = make('div', 'pin-image-row');
+  row.addEventListener('click', () => jumpTo(view.seq));
+  const thumb = make('img', 'pin-thumb');
+  thumb.src = dataUrl(view.image);
+  thumb.alt = '';
+  thumb.width = view.image.w;
+  thumb.height = view.image.h;
+  const caption = displayText(view.text).split('\n', 1)[0];
+  const size = view.preview ? view.full : view.image; // a preview tells the full image's size
+  row.append(thumb);
+  if (caption) row.append(make('span', 'pin-caption', caption));
+  el.append(head, row);
+  const entry = { el, relabel: null };
+  entry.relabel = () => {
+    head.title = t('pin.jump');
+    row.title = t('pin.jump');
+    thumb.alt = caption ? '' : t('image.alt', { name: capName(view.name) || t('note.anon'), w: size.w, h: size.h });
+    const name = capName(view.name) || t('note.anon');
+    who.textContent = view.mine ? t('note.you', { name }) : name;
+    meta.textContent = ` · ${t('image.label')} · ${size.w}×${size.h} · ${formatTime(view.ts)}`;
+  };
+  entry.relabel();
+  return entry;
+}
+
 function entryEl(view, ctx) {
+  if (view.image) return imageEntryEl(view, ctx);
   const { t } = ctx;
   const el = make('article', 'pin-entry');
   const head = button('pin-head', '', () => jumpTo(view.seq));

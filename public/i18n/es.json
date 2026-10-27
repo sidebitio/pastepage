@@ -34,6 +34,13 @@
     "empty": "Todavía no hay notas.",
     "emptyHint": "Pega algo abajo, o pega en cualquier parte de esta página."
   },
+  "usage": {
+    "title": "Sesión llena al {pct} %"
+  },
+  "rolled": {
+    "notice": "Esta sesión ha alcanzado su tamaño máximo: las notas más antiguas dejan ahora sitio a las nuevas.",
+    "newSession": "Iniciar una nueva sesión"
+  },
   "invite": {
     "button": "Invitar",
     "label": "Envía esto a la otra persona",
@@ -105,6 +112,7 @@
     "lines": { "one": "{count} línea", "other": "{count} líneas" },
     "copy": "Copiar",
     "copied": "Copiado",
+    "download": "Descargar",
     "wrap": "Ajustar",
     "noWrap": "No ajustar",
     "wrapTitle": "Ajustar las líneas largas (solo en pantalla)",
@@ -117,8 +125,11 @@
   },
   "reply": {
     "to": "Respondiendo a {name} · {lang} · {lines}",
+    "toImage": "Respondiendo a {name} · Imagen · {size}",
     "strip": "↪ {name} · {lang} · {lines}",
+    "stripImage": "↪ {name} · Imagen · {size}",
     "deleted": "↪ La nota original se eliminó",
+    "gone": "nota anterior, ya no disponible",
     "cancel": "Cancelar respuesta",
     "jump": "Ir a la nota original"
   },
@@ -146,9 +157,11 @@
     "reveal": "Mostrar",
     "hide": "Ocultar",
     "gone": "Esta nota ya se abrió o se eliminó.",
+    "rolled": "Ya no está disponible: la sesión ha hecho sitio para notas más recientes.",
     "forbidden": "Tú enviaste esta nota, así que no puedes abrirla aquí.",
     "once": "Se muestra una sola vez. Al cerrarla, desaparece.",
     "hidden": "Texto oculto",
+    "hiddenImage": "Imagen oculta",
     "new": "Nueva nota que se destruye tras leerla",
     "opened": "Nota abierta"
   },
@@ -170,6 +183,24 @@
     "name": "Tu nombre",
     "size": "{lines} · {size}",
     "send": "Enviar"
+  },
+  "image": {
+    "label": "Imagen",
+    "alt": "Imagen de {name}, {w} por {h}",
+    "open": "Ver a tamaño completo",
+    "viewer": "Imagen a tamaño completo",
+    "actual": "Tamaño real",
+    "close": "Cerrar",
+    "remove": "Quitar imagen",
+    "preparing": "Preparando la imagen…",
+    "dropHere": "Suelta aquí las imágenes para añadirlas",
+    "unsupported": "Solo puedes añadir imágenes PNG, JPEG, WebP y GIF.",
+    "unreadable": "No se pudo leer esta imagen.",
+    "tooLarge": "Esta imagen es demasiado grande para enviarla, incluso comprimida.",
+    "gifTooLarge": "Este GIF es demasiado grande para enviarlo. Los GIF no se comprimen, para conservar la animación.",
+    "tooMany": "Puedes añadir hasta {count} imágenes a la vez.",
+    "previewTag": "vista previa",
+    "previewNote": "Vista previa en baja resolución: la imagen completa se envió antes de que te unieras."
   },
   "settings": {
     "button": "Ajustes",

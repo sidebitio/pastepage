@@ -1,9 +1,12 @@
-// Composer: the text box, highlight language, display name and Send. The text is sent exactly as typed
-// (no trimming or normalising), and an unedited paste byte for byte, line endings included; paste anywhere on the
-// room page fills the box, and Ctrl/Cmd+Enter sends.
+// Composer: the text box, highlight language, display name, attached images and Send. The text is sent exactly as
+// typed (no trimming or normalising), and an unedited paste byte for byte, line endings included; paste anywhere on
+// the room page fills the box, and Ctrl/Cmd+Enter sends. An image pasted or dropped anywhere on the room page is
+// attached above the box; each attached image is sent as its own note, the first one with the text as its caption.
 import { storage } from './brand.js';
 import { lineCount } from './state.js';
-import { capName, chooseOutgoing, fmtBytes, langName, NAME_MAX } from './util.js';
+import { capName, chooseOutgoing, fmtBytes, langName, make, NAME_MAX } from './util.js';
+import { clipboardPlan, dataUrl, dropPlan, imageDetails } from './image.js';
+import { makePreview, prepareImage, viewerOpen } from './imageui.js';
 
 /** Everyday highlight languages, listed before all the others. */
 const COMMON = ['sql', 'bash', 'php', 'java', 'python', 'json'];
@@ -24,6 +27,18 @@ let sending = false;
 let lastPaste = null;
 /** The clipboard text of a paste into the box, until the browser has inserted it (the input event that follows). */
 let pendingPaste = null;
+
+/** At most this many images wait above the box at a time. */
+export const MAX_ATTACHED = 10;
+/**
+ * The images waiting to be sent, in order: {file, image (once prepared), preview (its small preview, null when it
+ * couldn't be made), busy}.
+ */
+let attached = [];
+/** Bumped whenever the attachments are thrown away, so a preparation still running for them is dropped. */
+let attachGen = 0;
+/** Preparations run one after another, so the images keep their order and only one is decoded at a time. */
+let prepChain = Promise.resolve();
 
 /** The text a note sent now carries: an unedited paste byte for byte, anything else as the box holds it. */
 function outgoing() {
@@ -67,7 +82,7 @@ export function typedName() {
 /**
  * Set or clear the note the next message replies to, and show or hide the "Replying to" bar.
  * @param {number|null} seq the replied-to note, or null for none
- * @param {{name: string, lang: string, lines: number}} [info] shown in the bar
+ * @param {{name: string, lang?: string, lines?: number, image?: {w: number, h: number}|null}} [info] shown in the bar
  * @returns {void}
  */
 export function setReplyTarget(seq, info) {
@@ -83,10 +98,14 @@ export function setReplyTarget(seq, info) {
 /** Write the "Replying to" bar in the current language (empty when not replying). */
 function paintReply() {
   const info = replyShown;
-  $('reply-text').textContent = info ? ctx.t('reply.to', {
-    name: capName(info.name) || ctx.t('note.anon'), lang: info.lang || ctx.t('note.plain'),
-    lines: ctx.t('note.lines', { count: info.lines }),
-  }) : '';
+  const name = capName(info?.name) || ctx.t('note.anon');
+  if (!info) $('reply-text').textContent = '';
+  else if (info.image) $('reply-text').textContent = ctx.t('reply.toImage', { name, size: `${info.image.w}×${info.image.h}` });
+  else {
+    $('reply-text').textContent = ctx.t('reply.to', {
+      name, lang: info.lang || ctx.t('note.plain'), lines: ctx.t('note.lines', { count: info.lines }),
+    });
+  }
 }
 
 /**
@@ -151,41 +170,165 @@ function updateSize() {
     : '';
 }
 
+/* ---------- attached images ---------- */
+
+const preparing = () => attached.some((a) => a.busy);
+
+/** Send is off while a note is being sent or an image is still being prepared. */
+function updateSend() {
+  $('compose-send').disabled = sending || preparing();
+}
+
+/** The message shown when an image can't be attached, per reason from prepareImage. */
+const IMAGE_ERRORS = {
+  unsupported: 'image.unsupported', unreadable: 'image.unreadable', tooLarge: 'image.tooLarge', gif: 'image.gifTooLarge',
+};
+
+/** Draw the strip of attached images above the box: thumbnail, details and a remove button each. */
+function paintAttached() {
+  const { t } = ctx;
+  const strip = $('attach');
+  strip.hidden = attached.length === 0;
+  strip.replaceChildren(...attached.map((a, i) => {
+    const item = make('div', 'attach-item' + (a.busy ? ' busy' : ''));
+    if (a.busy) {
+      item.append(make('span', 'attach-thumb'), make('span', 'attach-info', t('image.preparing')));
+    } else {
+      const img = make('img', 'attach-thumb');
+      img.src = dataUrl(a.image);
+      img.alt = '';
+      const info = make('span', 'attach-info');
+      info.append(make('b', '', t('image.label')), ` · ${a.image.w}×${a.image.h} · ${imageDetails(a.image, t)}`);
+      item.append(img, info);
+    }
+    const x = make('button', 'attach-remove', '×');
+    x.type = 'button';
+    x.title = t('image.remove');
+    x.setAttribute('aria-label', t('image.remove'));
+    x.disabled = sending; // what is being sent can't be taken back
+    x.addEventListener('click', () => removeAttached(a, i));
+    item.append(x);
+    return item;
+  }));
+  updateSend();
+}
+
+/** Remove one attached image (its preparation, if still running, is dropped) and move focus to a sensible place. */
+function removeAttached(a, index) {
+  attached = attached.filter((x) => x !== a);
+  paintAttached();
+  const xs = $('attach').querySelectorAll('.attach-remove');
+  (xs[Math.min(index, xs.length - 1)] ?? $('compose-text')).focus();
+}
+
+/** Throw all attached images away. */
+function clearAttached() {
+  attachGen++;
+  attached = [];
+  prepChain = Promise.resolve();
+  if (ctx) paintAttached();
+}
+
+/**
+ * Attach images: each is shown as "Preparing image…" at once and made to fit (see prepareImage) in turn. An image
+ * that can't be attached is removed again with a message.
+ * @param {Blob[]} files
+ */
+function attachFiles(files) {
+  const room = MAX_ATTACHED - attached.length;
+  if (files.length > room) ctx.toast(ctx.t('image.tooMany', { count: MAX_ATTACHED }));
+  const gen = attachGen;
+  for (const file of files.slice(0, Math.max(0, room))) {
+    const a = { file, image: null, preview: null, busy: true };
+    attached.push(a);
+    prepChain = prepChain.then(async () => {
+      if (gen !== attachGen || !attached.includes(a)) return;
+      let r;
+      try { r = await prepareImage(file); } catch (err) { console.error(err); r = { error: 'unreadable' }; }
+      // The preview the server keeps for people who join later; without one, the image is sent as a plain note.
+      const preview = r.image ? await makePreview(r.image) : null;
+      if (gen !== attachGen || !attached.includes(a)) return; // removed, or the room changed, meanwhile
+      a.busy = false;
+      a.file = null;
+      if (r.error) {
+        attached = attached.filter((x) => x !== a);
+        ctx.toast(ctx.t(IMAGE_ERRORS[r.error]));
+      } else {
+        a.image = r.image;
+        a.preview = preview;
+      }
+      paintAttached();
+    });
+  }
+  paintAttached();
+}
+
+/** The files on a clipboard: its file list, or the file items where a browser only lists those. */
+function clipboardFiles(cd) {
+  if (!cd) return [];
+  if (cd.files?.length) return [...cd.files];
+  return [...(cd.items ?? [])].filter((i) => i.kind === 'file').map((i) => i.getAsFile()).filter(Boolean);
+}
+
+/* ---------- sending ---------- */
+
+/**
+ * The payload the server keeps for people who join later: the note as it is, with the preview as its image, and the
+ * full image described. Null without a preview.
+ */
+function previewPayload(payload, preview) {
+  if (!preview || !payload.image) return null;
+  const { mime, w, h, bytes, orig } = payload.image;
+  return { ...payload, image: preview, preview: true, full: { mime, w, h, bytes, orig: { ...orig } } };
+}
+
 async function send(e) {
   e.preventDefault();
   const ta = $('compose-text');
   const shown = ta.value;
   const text = outgoing(); // no trimming; an unedited paste keeps its own line endings
-  if (text === '' || sending) return;
+  const images = attached.filter((a) => a.image);
+  if ((text === '' && !images.length) || sending || preparing()) return;
   sending = true;
-  $('compose-send').disabled = true;
+  updateSend();
   const name = saveName($('compose-name').value);
   $('compose-name').value = name;
-  const payload = { v: 1, t: text, l: $('compose-lang').value || 'auto', n: name, c: ctx.myClient };
   const burn = getBurn();
-  if (replyTo !== null && !burn) payload.r = replyTo;
-  let ok = false;
+  // Without images, one text note. With images, one note per image in order; the text is the first one's caption,
+  // and only the first one is the reply. Captions are never highlighted.
+  const notes = images.length
+    ? images.map((a, i) => ({ a, payload: { v: 1, t: i === 0 ? text : '', l: 'plaintext', n: name, c: ctx.myClient, image: a.image } }))
+    : [{ a: null, payload: { v: 1, t: text, l: $('compose-lang').value || 'auto', n: name, c: ctx.myClient } }];
+  if (replyTo !== null && !burn) notes[0].payload.r = replyTo;
+  let ok = true;
   try {
-    ok = await ctx.sendNote(payload, { burn });
+    for (const [i, { a, payload }] of notes.entries()) {
+      ok = await ctx.sendNote(payload, { burn, preview: burn ? null : previewPayload(payload, a?.preview) });
+      if (!ok) break; // keep what was not sent (the text too, if the first failed) so nothing is lost
+      if (a) attached = attached.filter((x) => x !== a);
+      if (i === 0) {
+        if (ta.value === shown) {
+          ta.value = '';
+          forgetPaste();
+        }
+        setReplyTarget(null);
+      }
+    }
   } finally {
     sending = false;
-    $('compose-send').disabled = false;
+    paintAttached();
   }
-  if (!ok) return; // keep the text (and the paste it came from) so nothing is lost
-  if (ta.value === shown) {
-    ta.value = '';
-    forgetPaste();
-  }
-  setReplyTarget(null);
+  if (!ok) return;
   clearBurn();
   updateSize();
 }
 
 /**
  * Wire up the composer once at startup.
- * @param {{t: Function, myClient: string, actions: object, sendMeta: Function,
- *   sendNote: (payload: object, opts: {burn: boolean}) => Promise<boolean>}} c shared context;
- *   sendNote encrypts and posts a note and resolves true on success
+ * @param {{t: Function, toast: (msg: string) => void, myClient: string, actions: object, sendMeta: Function,
+ *   sendNote: (payload: object, opts: {burn: boolean, preview: object|null}) => Promise<boolean>}} c shared context;
+ *   sendNote encrypts and posts a note (with preview: as an image note with its preview payload) and resolves true
+ *   on success
  * @returns {void}
  */
 export function initComposer(c) {
@@ -197,10 +340,12 @@ export function initComposer(c) {
   $('compose-name').addEventListener('change', () => { $('compose-name').value = saveName($('compose-name').value); });
   // A paste into the box: keep the clipboard's own text. The browser inserts it after this event; the input event
   // that follows records the box's value. Any other input (typing, undo, drop) counts as editing.
+  // A paste without text (only an image, or a refused file) inserts nothing, so the text pasted before it stays as it was.
   ta.addEventListener('paste', (e) => {
     const text = e.clipboardData?.getData('text/plain');
+    if (!text) return;
     lastPaste = null;
-    pendingPaste = text || null;
+    pendingPaste = text;
   });
   ta.addEventListener('input', (e) => {
     lastPaste = pendingPaste !== null && e.inputType === 'insertFromPaste' ? { raw: pendingPaste, valueAfterPaste: ta.value } : null;
@@ -211,12 +356,22 @@ export function initComposer(c) {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('compose-form').requestSubmit(); }
   });
   $('compose-form').addEventListener('submit', send);
-  // Paste anywhere on the room page goes into the composer.
+  // Paste anywhere on the room page goes into the composer. An image on the clipboard is attached, wherever the paste
+  // lands; any text with it is pasted as usual (into the box, it then is the image's caption).
   document.addEventListener('paste', (e) => {
-    if ($('view-room').hidden || !$('confirm').hidden) return;
+    if ($('view-room').hidden || !$('confirm').hidden || viewerOpen()) return;
     const tag = (e.target?.tagName || '').toLowerCase();
-    if (tag === 'textarea' || tag === 'input' || tag === 'select') return;
+    const inField = tag === 'textarea' || tag === 'input' || tag === 'select';
     const text = e.clipboardData?.getData('text/plain');
+    const plan = clipboardPlan(clipboardFiles(e.clipboardData), text);
+    if (plan.image) attachFiles([plan.image]);
+    else if (plan.refused) ctx.toast(ctx.t('image.unsupported'));
+    if (!text && (plan.image || plan.refused)) {
+      e.preventDefault();
+      if (!inField) ta.focus();
+      return;
+    }
+    if (inField) return;
     if (!text) return;
     e.preventDefault();
     ta.value = text; // the box turns CRLF and CR into LF, so the clipboard's own text is kept for sending
@@ -225,6 +380,45 @@ export function initComposer(c) {
     updateSize();
     ta.focus();
   });
+  initDrop(ta);
+}
+
+/**
+ * Image files dragged over the room page: show where they go, and attach them when dropped. Any drop of files is
+ * caught on the room page, so a missed drop never opens the file in place of the session. Text dragged into the
+ * box is left to the browser.
+ */
+function initDrop(ta) {
+  let depth = 0;
+  const hasFiles = (e) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
+  const inRoom = () => !$('view-room').hidden;
+  const hint = (on) => { $('drop-hint').hidden = !on; };
+  document.addEventListener('dragenter', (e) => {
+    if (!inRoom() || !hasFiles(e)) return;
+    depth++;
+    hint($('confirm').hidden && !viewerOpen());
+  });
+  document.addEventListener('dragleave', (e) => {
+    if (!hasFiles(e)) return;
+    depth = Math.max(0, depth - 1);
+    if (!depth) hint(false);
+  });
+  document.addEventListener('dragover', (e) => {
+    if (!inRoom() || !hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = $('confirm').hidden && !viewerOpen() ? 'copy' : 'none';
+  });
+  document.addEventListener('drop', (e) => {
+    if (!inRoom() || !hasFiles(e)) return;
+    e.preventDefault();
+    depth = 0;
+    hint(false);
+    if (!$('confirm').hidden || viewerOpen()) return;
+    const plan = dropPlan([...e.dataTransfer.files]);
+    if (plan.refused) ctx.toast(ctx.t('image.unsupported'));
+    if (plan.images.length) { attachFiles(plan.images); ta.focus(); }
+  });
+  document.addEventListener('dragend', () => { depth = 0; hint(false); });
 }
 
 /**
@@ -248,17 +442,19 @@ export function relabelComposer() {
     groups.all.label = t('compose.all');
   }
   paintReply();
+  paintAttached();
   updateSize();
 }
 
 /**
- * Empty the composer: text, reply target and size label. Called whenever the room changes, so unsent text
+ * Empty the composer: text, attached images, reply target and size label. Called whenever the room changes, so unsent text
  * never reaches another session.
  * @returns {void}
  */
 export function clearComposer() {
   $('compose-text').value = '';
   forgetPaste();
+  clearAttached();
   setReplyTarget(null);
   clearBurn();
   updateSize();

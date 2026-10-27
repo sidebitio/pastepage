@@ -64,7 +64,7 @@ test('i18n keys: every key-shaped string literal in public/js is in en.json', ()
   // (a fixed list, so a deleted section or a misspelled namespace in en.json is still caught).
   const msgs = en();
   const top = new Set(['start', 'join', 'gone', 'room', 'invite', 'expiry', 'time', 'hours', 'hoursShort', 'confirm',
-    'toast', 'note', 'reply', 'react', 'pin', 'burn', 'size', 'compose', 'settings', 'credit', 'error']);
+    'toast', 'note', 'reply', 'react', 'pin', 'burn', 'size', 'compose', 'image', 'settings', 'credit', 'error', 'usage', 'rolled']);
   const found = [];
   for (const { file, src } of jsSources()) {
     for (const m of src.matchAll(/(['"`])([a-z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+)\1/g)) {

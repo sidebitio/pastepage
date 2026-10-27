@@ -1,4 +1,4 @@
-// Tests for the live WebSocket layer: hello auth, presence, broadcasts, burn privacy, end.
+// Tests for the live WebSocket layer: hello auth, presence, broadcasts, burn privacy, image receipts, usage, end.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
@@ -629,4 +629,176 @@ test('welcomes still waiting to be sent share one budget for the whole server', 
   await waitFor(() => app.liveStats().welcomeBytes > 0);
   gone.ws.terminate(); // a page that leaves before its welcome went out frees its share too
   await waitFor(() => app.liveStats().welcomeBytes === 0 && app.liveStats().open === 2);
+});
+
+/** Post an image from a client: a full version and a preview. */
+const addImage = (url, id, client, extra = {}) => add(url, id, { client, kind: 'image', iv: IV, ct: 'full', piv: IV, pct: 'preview', ...extra });
+const gotMsg = (seq) => JSON.stringify({ type: 'got', seq });
+
+test('the welcome and every event carry the share key, usage and the rolled-off point', async () => {
+  const { url, app } = await server();
+  const id = await createSession(url);
+  await add(url, id);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.91');
+  const w = await a.next('welcome');
+  assert.equal(w.share, app.store.get(id).share);
+  assert.match(w.share, /^[A-Za-z0-9_-]{43}$/);
+  assert.equal(w.used, app.store.used(app.store.get(id)));
+  assert.ok(w.used > 0);
+  assert.equal(w.rolled, 0);
+  await add(url, id);
+  const m = await a.next('events');
+  assert.equal(m.used, app.store.used(app.store.get(id)));
+  assert.equal(m.rolled, 0);
+});
+
+test('the welcome carries the last clear and the preview limit', async () => {
+  const { url, app } = await server({ maxPreviewBytes: 1234, maxEvents: 3 });
+  const id = await createSession(url);
+  await add(url, id);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.71');
+  const w = await a.next('welcome');
+  assert.equal(w.maxPreview, 1234);
+  assert.equal(w.cleared, 0);
+  a.ws.close();
+  assert.equal((await post(url, 'clear', { id, auth: AUTH, client: 'creator-0' })).status, 200);
+  for (let i = 0; i < 3; i++) await add(url, id); // the clear rolls off
+  assert.equal(app.store.get(id).rolledSeq, 2);
+  const b = await join(url, id, 'linus-client', { since: 1 }); // it saw note 1, then the clear and more passed
+  const w2 = await b.next('welcome');
+  assert.equal(w2.mode, 'snapshot');
+  assert.ok(w2.events.every((e) => e.kind === 'note'));
+  assert.equal(w2.cleared, 2);
+  assert.equal(w2.rolled, 2);
+});
+
+test('an image is held in full until the other client confirms it, then only its preview is sent', async () => {
+  const { url, app } = await server();
+  const id = await createSession(url);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.92');
+  const b = await joinFrom(url, id, 'linus-client', '203.0.113.93');
+  await a.next('welcome');
+  await b.next('welcome');
+  const { data } = await addImage(url, id, 'ada-client');
+  const m = await b.next('events');
+  assert.equal(m.events[0].kind, 'image');
+  assert.equal(m.events[0].ct, 'full');
+  assert.equal(m.events[0].full, true);
+  const held = (await joinFrom(url, id, 'grace-client', '203.0.113.94')).next('welcome');
+  assert.equal((await held).events[0].full, true, 'still held before the receipt');
+  b.ws.send(gotMsg(data.seq));
+  const usage = await a.next('usage');
+  assert.equal(usage.used, app.store.used(app.store.get(id)));
+  assert.equal(usage.rolled, 0);
+  const c = await joinFrom(url, id, 'grace-client', '203.0.113.95');
+  const ev = (await c.next('welcome')).events[0];
+  assert.equal(ev.full, false);
+  assert.equal(ev.ct, undefined);
+  assert.equal(ev.pct, 'preview');
+});
+
+test('a client that closes cleanly before its receipt no longer holds the full', async () => {
+  const { url, app } = await server();
+  const id = await createSession(url);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.96');
+  const b = await joinFrom(url, id, 'linus-client', '203.0.113.97');
+  await a.next('welcome');
+  await b.next('welcome');
+  await addImage(url, id, 'ada-client');
+  await b.next('events');
+  b.ws.close(1001); // the tab went away
+  await a.next('usage');
+  assert.equal(app.store.get(id).events[0].ct, undefined);
+});
+
+test('a client that closes without a code (1005: on purpose, not a drop) no longer holds the full', async () => {
+  const { url, app } = await server();
+  const id = await createSession(url);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.106');
+  const b = await joinFrom(url, id, 'linus-client', '203.0.113.107');
+  await a.next('welcome');
+  await b.next('welcome');
+  await addImage(url, id, 'ada-client');
+  await b.next('events');
+  b.ws.close(); // a close frame without a code
+  await a.next('usage');
+  assert.equal(app.store.get(id).events[0].ct, undefined);
+});
+
+test('a client whose connection drops abnormally still holds the full, and confirms it when back', async () => {
+  const { url, app } = await server();
+  const id = await createSession(url);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.98');
+  const b = await joinFrom(url, id, 'linus-client', '203.0.113.99');
+  await a.next('welcome');
+  await b.next('welcome');
+  assert.equal((await a.next('presence')).present, 2);
+  const { data } = await addImage(url, id, 'ada-client');
+  b.ws.terminate(); // a network drop: no close frame, the server sees 1006
+  assert.equal((await a.next('presence')).present, 1);
+  assert.equal(app.store.get(id).events[0].ct, 'full');
+  const back = await joinFrom(url, id, 'linus-client', '203.0.113.99');
+  const ev = (await back.next('welcome')).events[0];
+  assert.equal(ev.full, true);
+  assert.equal(ev.ct, 'full');
+  back.ws.send(gotMsg(data.seq));
+  await a.next('usage');
+  assert.equal(app.store.get(id).events[0].ct, undefined);
+});
+
+test('a client with two connections still holds the full while one of them is open', async () => {
+  const { url, app } = await server();
+  const id = await createSession(url);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.100');
+  const b1 = await joinFrom(url, id, 'linus-client', '203.0.113.101');
+  const b2 = await joinFrom(url, id, 'linus-client', '203.0.113.101');
+  for (const c of [a, b1, b2]) await c.next('welcome');
+  await addImage(url, id, 'ada-client');
+  b1.ws.close(1000);
+  await waitFor(() => app.liveStats().open === 2);
+  assert.equal(app.store.get(id).events[0].ct, 'full');
+  b2.ws.close(1000);
+  await a.next('usage');
+  assert.equal(app.store.get(id).events[0].ct, undefined);
+});
+
+test('messages after hello that are not a valid receipt are ignored without closing the socket', async () => {
+  const { url, app } = await server();
+  const id = await createSession(url);
+  const a = await joinFrom(url, id, 'ada-client', '203.0.113.102');
+  const b = await joinFrom(url, id, 'linus-client', '203.0.113.103');
+  await a.next('welcome');
+  await b.next('welcome');
+  const { data } = await addImage(url, id, 'ada-client');
+  for (const msg of ['garbage', 'null', '[]', '{}', JSON.stringify({ type: 'got' }), gotMsg(-1), gotMsg(1.5), gotMsg(String(data.seq)),
+    gotMsg(Number.MAX_SAFE_INTEGER + 2), JSON.stringify({ type: 'hello', id, auth: AUTH, client: 'linus-client', since: -1 })]) {
+    b.ws.send(msg);
+  }
+  b.ws.send(Buffer.from(gotMsg(data.seq)), { binary: true });
+  await new Promise((r) => setTimeout(r, 100));
+  assert.equal(b.ws.readyState, WsClient.OPEN);
+  assert.equal(app.store.get(id).events[0].ct, 'full');
+  b.ws.send(gotMsg(data.seq)); // the socket still takes a valid receipt
+  await a.next('usage');
+  assert.equal(app.store.get(id).events[0].ct, undefined);
+});
+
+test('the welcome budget counts previews before any welcome is built', async (t) => {
+  const { url, app } = await server({ maxSessionBytes: 30_000_000, maxTotalBytes: 1e9, maxPreviewBytes: 1_500_000, maxWelcomeBytesInFlight: 1 });
+  const id = await createSession(url);
+  const pct = randomBytes(1_120_000).toString('base64url');
+  for (let i = 0; i < 19; i++) assert.equal((await addImage(url, id, 'creator-0', { pct })).status, 200); // previews only: nobody else is in
+  assert.equal(app.store.get(id).events[0].ct, undefined);
+  const slow = wsFrom(url, { 'x-forwarded-for': '203.0.113.104' });
+  assert.equal(await slow.opened, true);
+  slow.ws.pause();
+  slow.hello(id, 'ada-client');
+  await waitFor(() => app.liveStats().open === 1);
+  const encodes = t.mock.method(JSON, 'stringify');
+  const second = await joinFrom(url, id, 'linus-client', '203.0.113.105');
+  assert.equal((await second.next('error')).code, 'RATE_LIMITED');
+  assert.equal(encodes.mock.calls.filter((c) => c.arguments[0]?.type === 'welcome').length, 0, 'refused before its welcome is built');
+  encodes.mock.restore();
+  slow.ws.resume();
+  await slow.next('welcome', 10000);
 });

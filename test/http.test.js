@@ -215,6 +215,35 @@ test('actions', async () => {
   assert.equal(after.status, 404);
 });
 
+test('add an image: the preview is required, and only images carry one', async () => {
+  const { url } = await server();
+  const id = await make(url);
+  const c = { id, auth: AUTH, client: CLIENT };
+  const image = { ...c, kind: 'image', iv: IV, ct: 'full', piv: IV, pct: 'preview' };
+  assert.deepEqual(await post(url, 'add', image), { status: 200, data: { seq: 1 } });
+  const bad = async (body) => {
+    const r = await post(url, 'add', body);
+    assert.equal(r.status, 400, JSON.stringify(body));
+    assert.deepEqual(r.data, { error: 'BAD_REQUEST' });
+  };
+  await bad({ ...image, pct: undefined });
+  await bad({ ...image, piv: undefined });
+  await bad({ ...image, piv: 'short' });
+  await bad({ ...image, pct: '' });
+  await bad({ ...image, pct: 'not base64url!' });
+  await bad({ ...c, kind: 'note', iv: IV, ct: 'abc', pct: 'preview' });
+  await bad({ ...c, kind: 'note', iv: IV, ct: 'abc', piv: IV });
+  await bad({ ...c, kind: 'burn', iv: IV, ct: 'abc', piv: IV, pct: 'preview' });
+});
+
+test('the largest image and preview fit in one request', async () => {
+  const { url } = await server();
+  const id = await make(url);
+  const { maxNoteBytes, maxPreviewBytes } = loadConfig({});
+  const r = await post(url, 'add', { id, auth: AUTH, client: CLIENT, kind: 'image', iv: IV, ct: 'x'.repeat(maxNoteBytes), piv: IV, pct: 'y'.repeat(maxPreviewBytes) });
+  assert.deepEqual(r, { status: 200, data: { seq: 1 } });
+});
+
 test('burn-open', async () => {
   const { url } = await server();
   const id = await make(url);
@@ -271,7 +300,8 @@ test('bad input', async () => {
 
 test('oversized body gets a reliable 413 (declared length)', async () => {
   const { url } = await server();
-  const big = 'x'.repeat(loadConfig({}).maxNoteBytes + 20000);
+  const { maxNoteBytes, maxPreviewBytes } = loadConfig({});
+  const big = 'x'.repeat(maxNoteBytes + maxPreviewBytes + 20000);
   for (let i = 0; i < 5; i++) {
     const r = await post(url, 'add', big);
     assert.equal(r.status, 413, `run ${i}`);

@@ -11,8 +11,10 @@ PastePage is a small self-hosted web app: you run it on your own server, next to
 - **Exactly what you pasted.** No trimmed spaces, smart quotes or reformatting, and Windows line endings stay as they are. If you type the text, paste into text already in the box, or change a paste before sending it, line breaks are sent as plain LF. Syntax highlighting, line numbers, Wrap and Copy on every note.
 - **Live.** New notes, reactions, pins and "2 here" update instantly for everyone in the session.
 - **One link to join.** Send the invite link, or send the session name and password separately if you want to be extra careful.
+- **Images too.** Paste a screenshot or drop image files (PNG, JPEG, WebP or GIF) and they are sent as notes, encrypted like text, with any text in the box as the caption. A large image is made smaller in your browser before it is sent: first without losing anything, then as high-quality WebP, then at a smaller size if needed. Hidden data such as a photo's GPS location is removed before sending. Each card has Copy, Download and a full-size view. The full image is kept in each person's browser, encrypted; the server holds it only until everyone who was there has it, and then keeps a small preview for people who join later.
 - **Replies, reactions and pins.** Reply to a note, react with 👍 ❤️ 😂 🎉 👀 ✅, pin the notes that matter.
 - **Burn after reading.** A note that the first other person can open once, after which it is deleted for everyone.
+- **Sessions don't fill up.** When a session reaches its size limit, the oldest notes make room for new ones, and a thin line under the header shows how full it is.
 - **You decide when it's gone.** Sessions are deleted after 1 hour to 7 days (24 hours by default), when someone ends them, or roughly 2-3 minutes after the last person leaves.
 - **Light and dark themes, a wide view** that uses the full window width, and six languages: English, Nederlands, Deutsch, Français, Español and 日本語.
 - **Loads nothing from other sites**: no CDNs, web fonts, analytics or trackers.
@@ -21,7 +23,7 @@ PastePage is a small self-hosted web app: you run it on your own server, next to
 
 Everyone in a session knows its password. Your browser turns the password into an encryption key, and every note, reply, reaction and pin is encrypted with that key before it is sent. The server only stores and passes on encrypted data, in memory. PastePage itself never writes it to disk, but the operating system could still swap memory to disk, which the app can't control.
 
-The server **cannot** see the text, the names people type or the password. It **can** see the size and timing of what is sent and what kind of event it is (a note, a burn-after-reading note, or a small event such as a reaction, pin or read notice). Encryption does not hide length, so from the size of a small event the server can often tell a reaction from a pin or a read notice, whether it was switched on or off, and sometimes which emoji. It can also see random per-tab ids, the session name, and visitors' IP addresses (used for the abuse limits).
+The server **cannot** see the text, the names people type or the password. It **can** see the size and timing of what is sent and what kind of event it is (a note, a burn-after-reading note, or a small event such as a reaction, pin or read notice). Encryption does not hide length, so from the size of a small event the server can often tell a reaction from a pin or a read notice, whether it was switched on or off, and sometimes which emoji. It can also see which notes are images and how large their previews are, and which tab saved which image. It can also see random per-tab ids, the session name, and visitors' IP addresses (used for the abuse limits).
 
 One caveat applies to every web app that encrypts in the browser: the encryption code is delivered by the server. Whoever runs the server could change that code, so you are trusting the person who runs it. Self-hosting means that person is you.
 
@@ -135,9 +137,10 @@ Settings are environment variables. Every one has a safe default, so you only se
 | `TRUST_PROXY` | `loopback` | Which direct callers may tell PastePage the visitor's real IP address (the `X-Forwarded-For` header): `loopback` (this machine only), `false` (nobody), a comma-separated list of exact IP addresses, or `true` (anyone, not recommended). See [docs/security.md](docs/security.md#trust_proxy). |
 | `IDLE_SECONDS` | `120` | A session is deleted this long after the last person left (checked every 10 seconds). |
 | `MAX_HOURS` | `168` | The longest a session can be set to last, in hours (default 168, which is 7 days). If it is lower than an option in the page's expiry menu, the longer choices are capped to it. |
-| `MAX_NOTE_BYTES` | `1500000` | Largest single note, measured after encryption. That fits about 1.1 MB of plain text, less if the text has many line breaks, tabs, quotes or backslashes. |
-| `MAX_SESSION_BYTES` | `12000000` | Most encrypted data one session can hold. "Clear all" makes room again. |
-| `MAX_EVENTS` | `2000` | Most events one session can hold (notes, reactions, pins, deletions and so on). |
+| `MAX_NOTE_BYTES` | `1500000` | Largest single note, measured after encryption. That fits about 1.1 MB of plain text, less if the text has many line breaks, tabs, quotes or backslashes. Browsers make images fit this default (at most 800 KB of image per note); with a lower value, larger images are refused as too large. |
+| `MAX_PREVIEW_BYTES` | `96000` | Largest encrypted preview of an image. An image whose preview is larger is sent as an ordinary note and kept in full on the server. |
+| `MAX_SESSION_BYTES` | `12000000` | Most encrypted data one session can hold. Past this, the oldest events are dropped to make room. |
+| `MAX_EVENTS` | `2000` | Most events one session can hold (notes, reactions, pins, deletions and so on). Past this, the oldest events are dropped to make room. |
 | `MAX_SESSIONS` | `1000` | Most sessions on the server at once. |
 | `MAX_TOTAL_BYTES` | `268435456` | Most encrypted data across all sessions together (256 MiB). |
 | `MAX_FAILS` | `10` | Requests with a wrong session name or password from one IP address (for IPv6, one /64 network) within 15 minutes before it is locked out. Joining a session isn't counted; see [docs/security.md](docs/security.md#limits-and-the-lockout). |

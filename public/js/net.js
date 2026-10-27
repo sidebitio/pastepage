@@ -42,8 +42,11 @@ function socketUrl(base) {
  * @param {object} opts
  * @param {string} [opts.base] base URL ending in '/', or '' for the current page
  * @param {() => {id: string, auth: string, client: string, since: number}} opts.hello hello fields, read on every connect
- * @param {(msg: object, info: {reset: boolean}) => void} [opts.onWelcome] welcome received; reset is true for a snapshot
+ * @param {(msg: object, info: {reset: boolean}) => void} [opts.onWelcome] welcome received; reset is true for a snapshot.
+ *   msg is the server's welcome as it is, including share, used and rolled
  * @param {(events: object[]) => void} [opts.onEvents] new events pushed
+ * @param {(used: number, rolled: number) => void} [opts.onUsage] the session's usage (0-1000) and rolled-off point
+ *   (the highest seq dropped to make room, 0 when none), from the welcome, every events message and usage updates
  * @param {(present: number) => void} [opts.onPresence] presence count changed
  * @param {(expires: number) => void} [opts.onSession] session expiry changed
  * @param {(reason: string) => void} [opts.onEnded] session ended, expired or went idle
@@ -53,7 +56,8 @@ function socketUrl(base) {
  *   after any other drop; both are followed by a new attempt after the next delay
  * @param {number[]} [opts.delays] reconnect delays in ms; the last one repeats
  * @param {typeof WebSocket} [WebSocketImpl] WebSocket constructor
- * @returns {{close: () => void}} handle; close() stops the connection for good
+ * @returns {{close: () => void, send: (msg: object) => boolean}} handle; close() stops the connection for good (a clean
+ *   leave, code 1000); send() sends a message as JSON on the current socket if it is open, and says whether it did
  */
 export function connectLive(opts, WebSocketImpl = globalThis.WebSocket) {
   const delays = opts.delays?.length ? opts.delays : [1000, 2000, 5000, 10000];
@@ -75,12 +79,17 @@ export function connectLive(opts, WebSocketImpl = globalThis.WebSocket) {
         maxSeq(msg.events);
         attempt = 0;
         opts.onWelcome?.(msg, { reset });
+        opts.onUsage?.(msg.used, msg.rolled);
         opts.onStatus?.('online');
         break;
       }
       case 'events':
         maxSeq(msg.events);
         opts.onEvents?.(msg.events);
+        opts.onUsage?.(msg.used, msg.rolled);
+        break;
+      case 'usage':
+        opts.onUsage?.(msg.used, msg.rolled);
         break;
       case 'presence':
         opts.onPresence?.(msg.present);
@@ -133,7 +142,16 @@ export function connectLive(opts, WebSocketImpl = globalThis.WebSocket) {
       stopped = true;
       clearTimeout(timer);
       timer = null;
-      try { ws?.close(); } catch { /* already closed */ }
+      try { ws?.close(1000); } catch { /* already closed */ }
+    },
+    send(msg) {
+      if (stopped || ws?.readyState !== 1) return false; // 1: OPEN
+      try {
+        ws.send(JSON.stringify(msg));
+        return true;
+      } catch {
+        return false;
+      }
     },
   };
 }

@@ -28,8 +28,10 @@ const RE = {
   client: /^[A-Za-z0-9_-]{6,32}$/,
   iv: /^[A-Za-z0-9_-]{16}$/,
   ct: /^[A-Za-z0-9_-]+$/,
+  piv: /^[A-Za-z0-9_-]{16}$/, // an image's preview: the same shapes as iv and ct
+  pct: /^[A-Za-z0-9_-]+$/,
 };
-const KINDS = new Set(['note', 'burn', 'meta']);
+const KINDS = new Set(['note', 'burn', 'meta', 'image']);
 const ACTIONS = new Set(['create', 'add', 'delete', 'clear', 'expire', 'end', 'burn-open']);
 const OTHER_SITE = new Set(['cross-site', 'same-site']);
 
@@ -143,6 +145,11 @@ function validate(action, body) {
     out.kind = body.kind;
     out.iv = str('iv');
     out.ct = str('ct');
+    // An image carries its preview too (piv/pct); other kinds must not.
+    if (body.kind === 'image') {
+      out.piv = str('piv');
+      out.pct = str('pct');
+    } else if (body.piv !== undefined || body.pct !== undefined) throw bad();
   }
   if (action === 'delete' || action === 'burn-open') {
     if (!Number.isSafeInteger(body.target) || body.target < 0) throw bad();
@@ -157,7 +164,7 @@ function validate(action, body) {
  * @returns {(req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse) => void}
  */
 export function createHttpHandler({ config, store, failures, creates, isTrusted, publicDir, now = () => Date.now() }) {
-  const bodyCap = config.maxNoteBytes + 16384;
+  const bodyCap = config.maxNoteBytes + config.maxPreviewBytes + 16384; // an image and its preview fit in one request
 
   async function serveStatic(req, res) {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -220,7 +227,7 @@ export function createHttpHandler({ config, store, failures, creates, isTrusted,
     }
     switch (action) {
       case 'add':
-        return sendJson(res, 200, { seq: store.append(session, { kind: f.kind, client: f.client, iv: f.iv, ct: f.ct }).seq });
+        return sendJson(res, 200, { seq: store.append(session, { kind: f.kind, client: f.client, iv: f.iv, ct: f.ct, piv: f.piv, pct: f.pct }).seq });
       case 'delete':
         store.deleteNote(session, f.target);
         return sendJson(res, 200, { ok: true });

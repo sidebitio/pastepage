@@ -118,19 +118,34 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
     if (session) store.setPresence(session, count);
   }
 
+  /**
+   * Tell the store a client left (its last socket closed); tolerates a session that is already gone. A clean close
+   * (1000 or 1001: the tab closed or navigated away; 1005: a close frame without a code, so also on purpose) means it
+   * is gone; anything else (1006: the connection dropped) means it may come back, so it still has to receive the
+   * images sent meanwhile.
+   */
+  function memberLeft(id, client, code) {
+    const session = store.get(id);
+    if (session) store.memberDown(session, client, { clean: code === 1000 || code === 1001 || code === 1005 });
+  }
+
   function register(ws, id, client, ip) {
     let room = rooms.get(id);
     if (!room) rooms.set(id, (room = new Map()));
     const before = room.size;
     let set = room.get(client);
-    if (!set) room.set(client, (set = new Set()));
+    if (!set) {
+      room.set(client, (set = new Set()));
+      const session = store.get(id);
+      if (session) store.memberUp(session, client);
+    }
     set.add(ws);
     increment(openPerIp, ip);
     openTotal++;
-    ws.once('close', () => {
+    ws.once('close', (code) => {
       decrement(openPerIp, ip);
       openTotal--;
-      unregister(ws, id, client);
+      unregister(ws, id, client, code);
     });
     if (room.size !== before) {
       syncStore(id, room.size);
@@ -139,13 +154,14 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
     return room.size;
   }
 
-  function unregister(ws, id, client) {
+  function unregister(ws, id, client, code) {
     const room = rooms.get(id);
     const set = room?.get(client);
     if (!set || !set.delete(ws)) return;
     if (set.size > 0) return;
     room.delete(client);
     if (room.size === 0) rooms.delete(id);
+    memberLeft(id, client, code);
     syncStore(id, room.size);
     broadcast(id, { type: 'presence', present: room.size });
   }
@@ -176,12 +192,30 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
     }
   }
 
+  /**
+   * A message on a socket after its hello: only a receipt, `{type: 'got', seq}`, which tells the store this client
+   * has saved an image's full version. Anything else is ignored, and the socket stays open.
+   */
+  function onLater(session, client, data, isBinary) {
+    if (isBinary) return;
+    let msg;
+    try {
+      msg = JSON.parse(data.toString());
+    } catch {
+      return;
+    }
+    if (!msg || typeof msg !== 'object' || msg.type !== 'got' || !Number.isSafeInteger(msg.seq) || msg.seq < 0) return;
+    store.got(session, client, msg.seq);
+  }
+
   /** A new socket; notPending is called once it is no longer waiting for its first message. */
   function onConnection(ws, req, notPending = () => {}) {
     alive.add(ws);
     ws.on('pong', () => alive.add(ws));
     ws.on('error', () => {});
     let seenFirst = false;
+    /** Handles the messages after a successful hello; null until then, and for good after a failed one. */
+    let later = null;
     const timer = setTimeout(() => {
       seenFirst = true; // the deadline passed: a late hello must not be accepted while the close is pending
       closeSocket(ws, 4001);
@@ -189,8 +223,14 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
     ws.once('close', () => clearTimeout(timer));
 
     ws.on('message', (data, isBinary) => {
-      if (seenFirst || ws.readyState !== ws.OPEN) return;
-      seenFirst = true; // only the first message counts, valid or not
+      if (ws.readyState !== ws.OPEN) return;
+      if (seenFirst) {
+        try {
+          later?.(data, isBinary);
+        } catch (err) { console.error(err.stack); }
+        return;
+      }
+      seenFirst = true; // only the first message is a hello, valid or not
       clearTimeout(timer);
       notPending();
       let msg;
@@ -223,10 +263,11 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
       }
       // A welcome can be as large as the session. Pages that don't read would otherwise make the server hold one for
       // each of them, so the welcomes not yet passed on to the network share one budget. The ciphertexts appear in
-      // the welcome as they are, so their length is a lower bound that refuses most pages before any JSON is built.
+      // the welcome as they are (an image's full and its preview), so their length is a lower bound that refuses most
+      // pages before any JSON is built.
       const { mode, events } = store.eventsSince(session, msg.since);
       let atLeast = 0;
-      for (const ev of events) atLeast += ev.ct?.length ?? 0;
+      for (const ev of events) atLeast += (ev.ct?.length ?? 0) + (ev.pct?.length ?? 0);
       if (welcomeBytes + atLeast > welcomeBudget) return reject(ws, 'RATE_LIMITED');
       const room = rooms.get(msg.id);
       const welcome = encode({
@@ -236,9 +277,15 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
         expires: session.expires,
         present: (room?.size ?? 0) + (room?.has(msg.client) ? 0 : 1), // the count once this socket is registered
         now: Math.floor(store.now() / 1000),
+        share: session.share,
+        used: store.used(session),
+        rolled: session.rolledSeq,
+        cleared: session.clearedSeq, // a clear that rolled off is in no snapshot; the page still has to drop what it removed
+        maxPreview: store.config.maxPreviewBytes, // the page sends an image without a preview when its preview is larger
       });
       if (welcomeBytes + welcome.length > welcomeBudget) return reject(ws, 'RATE_LIMITED');
       register(ws, msg.id, msg.client, ip);
+      later = (next, nextBinary) => onLater(session, msg.client, next, nextBinary);
       sendWelcome(ws, welcome);
     });
   }
@@ -280,9 +327,14 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
   };
   server.on('upgrade', onUpgrade);
 
-  const onEvent = (id, wire) => {
+  const onEvent = (id, wire, { used, rolled }) => {
     try {
-      broadcast(id, { type: 'events', events: [wire] });
+      broadcast(id, { type: 'events', events: [wire], used, rolled });
+    } catch (err) { console.error(err.stack); }
+  };
+  const onUsage = (id, { used, rolled }) => {
+    try {
+      broadcast(id, { type: 'usage', used, rolled });
     } catch (err) { console.error(err.stack); }
   };
   const onSession = (id, { expires }) => {
@@ -302,6 +354,7 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
     } catch (err) { console.error(err.stack); }
   };
   store.on('event', onEvent);
+  store.on('usage', onUsage);
   store.on('session', onSession);
   store.on('ended', onEnded);
 
@@ -323,6 +376,7 @@ export function attachLive(server, { store, failures, isTrusted, config }) {
       clearInterval(heartbeat);
       server.off('upgrade', onUpgrade);
       store.off('event', onEvent);
+      store.off('usage', onUsage);
       store.off('session', onSession);
       store.off('ended', onEnded);
       for (const ws of wss.clients) ws.terminate();

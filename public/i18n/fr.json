@@ -34,6 +34,13 @@
     "empty": "Aucune note pour l'instant.",
     "emptyHint": "Collez quelque chose ci-dessous, ou n'importe où sur cette page."
   },
+  "usage": {
+    "title": "Session remplie à {pct} %"
+  },
+  "rolled": {
+    "notice": "Cette session a atteint sa taille maximale : les notes les plus anciennes laissent désormais la place aux nouvelles.",
+    "newSession": "Démarrer une nouvelle session"
+  },
   "invite": {
     "button": "Inviter",
     "label": "Envoyez ceci à l'autre personne",
@@ -105,6 +112,7 @@
     "lines": { "one": "{count} ligne", "other": "{count} lignes" },
     "copy": "Copier",
     "copied": "Copié",
+    "download": "Télécharger",
     "wrap": "Retour à la ligne",
     "noWrap": "Sans retour à la ligne",
     "wrapTitle": "Renvoyer les longues lignes à la ligne (affichage uniquement)",
@@ -117,8 +125,11 @@
   },
   "reply": {
     "to": "Réponse à {name} · {lang} · {lines}",
+    "toImage": "Réponse à {name} · Image · {size}",
     "strip": "↪ {name} · {lang} · {lines}",
+    "stripImage": "↪ {name} · Image · {size}",
     "deleted": "↪ La note d'origine a été supprimée",
+    "gone": "note antérieure, désormais indisponible",
     "cancel": "Annuler la réponse",
     "jump": "Aller à la note d'origine"
   },
@@ -146,9 +157,11 @@
     "reveal": "Afficher",
     "hide": "Masquer",
     "gone": "Cette note a déjà été ouverte ou supprimée.",
+    "rolled": "Plus disponible : la session a fait de la place pour des notes plus récentes.",
     "forbidden": "Vous avez envoyé cette note, vous ne pouvez donc pas l'ouvrir ici.",
     "once": "Affichée une seule fois. Une fois fermée, elle disparaît.",
     "hidden": "Texte masqué",
+    "hiddenImage": "Image masquée",
     "new": "Nouvelle note à détruire après lecture",
     "opened": "Note ouverte"
   },
@@ -170,6 +183,24 @@
     "name": "Votre nom",
     "size": "{lines} · {size}",
     "send": "Envoyer"
+  },
+  "image": {
+    "label": "Image",
+    "alt": "Image de {name}, {w} sur {h}",
+    "open": "Afficher en taille réelle",
+    "viewer": "Image en taille réelle",
+    "actual": "Taille réelle",
+    "close": "Fermer",
+    "remove": "Retirer l'image",
+    "preparing": "Préparation de l'image…",
+    "dropHere": "Déposez des images ici pour les ajouter",
+    "unsupported": "Seules les images PNG, JPEG, WebP et GIF peuvent être ajoutées.",
+    "unreadable": "Cette image n'a pas pu être lue.",
+    "tooLarge": "Cette image est trop volumineuse pour être envoyée, même compressée.",
+    "gifTooLarge": "Ce GIF est trop volumineux pour être envoyé. Les GIF ne sont pas compressés, afin de conserver leur animation.",
+    "tooMany": "Vous pouvez ajouter jusqu'à {count} images à la fois.",
+    "previewTag": "aperçu",
+    "previewNote": "Aperçu en basse résolution : l'image complète a été envoyée avant que vous ne rejoigniez la session."
   },
   "settings": {
     "button": "Paramètres",

@@ -34,6 +34,13 @@
     "empty": "No notes yet.",
     "emptyHint": "Paste something below, or paste anywhere on this page."
   },
+  "usage": {
+    "title": "Session {pct}% full"
+  },
+  "rolled": {
+    "notice": "This session is at its maximum size: the oldest notes now make room for new ones.",
+    "newSession": "Start a new session"
+  },
   "invite": {
     "button": "Invite",
     "label": "Send these to the other person",
@@ -105,6 +112,7 @@
     "lines": { "one": "{count} line", "other": "{count} lines" },
     "copy": "Copy",
     "copied": "Copied",
+    "download": "Download",
     "wrap": "Wrap",
     "noWrap": "No wrap",
     "wrapTitle": "Wrap long lines (display only)",
@@ -117,8 +125,11 @@
   },
   "reply": {
     "to": "Replying to {name} · {lang} · {lines}",
+    "toImage": "Replying to {name} · Image · {size}",
     "strip": "↪ {name} · {lang} · {lines}",
+    "stripImage": "↪ {name} · Image · {size}",
     "deleted": "↪ The original note was deleted",
+    "gone": "earlier note, no longer available",
     "cancel": "Cancel reply",
     "jump": "Go to the original note"
   },
@@ -146,9 +157,11 @@
     "reveal": "Reveal",
     "hide": "Hide",
     "gone": "This note was already opened or deleted.",
+    "rolled": "No longer available: the session made room for newer notes.",
     "forbidden": "You sent this note, so you can't open it here.",
     "once": "Shown once. Close it and it is gone.",
     "hidden": "Hidden text",
+    "hiddenImage": "Hidden image",
     "new": "New burn-after-reading note",
     "opened": "Note opened"
   },
@@ -170,6 +183,24 @@
     "name": "Your name",
     "size": "{lines} · {size}",
     "send": "Send"
+  },
+  "image": {
+    "label": "Image",
+    "alt": "Image from {name}, {w} by {h}",
+    "open": "Show full size",
+    "viewer": "Full-size image",
+    "actual": "Actual size",
+    "close": "Close",
+    "remove": "Remove image",
+    "preparing": "Preparing image…",
+    "dropHere": "Drop images here to add them",
+    "unsupported": "Only PNG, JPEG, WebP and GIF images can be added.",
+    "unreadable": "This image could not be read.",
+    "tooLarge": "This image is too large to send, even compressed.",
+    "gifTooLarge": "This GIF is too large to send. GIFs are not compressed, so their animation stays intact.",
+    "tooMany": "You can add up to {count} images at a time.",
+    "previewTag": "preview",
+    "previewNote": "Low-resolution preview: the full image was sent before you joined."
   },
   "settings": {
     "button": "Settings",

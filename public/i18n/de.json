@@ -34,6 +34,13 @@
     "empty": "Noch keine Notizen.",
     "emptyHint": "Füge unten etwas ein oder einfach irgendwo auf dieser Seite."
   },
+  "usage": {
+    "title": "Sitzung zu {pct} % voll"
+  },
+  "rolled": {
+    "notice": "Diese Sitzung hat ihre maximale Größe erreicht: Die ältesten Notizen machen jetzt Platz für neue.",
+    "newSession": "Neue Sitzung starten"
+  },
   "invite": {
     "button": "Einladen",
     "label": "Schick das der anderen Person",
@@ -105,6 +112,7 @@
     "lines": { "one": "{count} Zeile", "other": "{count} Zeilen" },
     "copy": "Kopieren",
     "copied": "Kopiert",
+    "download": "Herunterladen",
     "wrap": "Umbrechen",
     "noWrap": "Nicht umbrechen",
     "wrapTitle": "Lange Zeilen umbrechen (nur Anzeige)",
@@ -117,8 +125,11 @@
   },
   "reply": {
     "to": "Antwort an {name} · {lang} · {lines}",
+    "toImage": "Antwort an {name} · Bild · {size}",
     "strip": "↪ {name} · {lang} · {lines}",
+    "stripImage": "↪ {name} · Bild · {size}",
     "deleted": "↪ Die ursprüngliche Notiz wurde gelöscht",
+    "gone": "frühere Notiz, nicht mehr verfügbar",
     "cancel": "Antwort abbrechen",
     "jump": "Zur ursprünglichen Notiz"
   },
@@ -146,9 +157,11 @@
     "reveal": "Anzeigen",
     "hide": "Verbergen",
     "gone": "Diese Notiz wurde schon geöffnet oder gelöscht.",
+    "rolled": "Nicht mehr verfügbar: Die Sitzung hat Platz für neuere Notizen gemacht.",
     "forbidden": "Du hast diese Notiz gesendet und kannst sie deshalb hier nicht öffnen.",
     "once": "Nur einmal sichtbar. Sobald du sie schließt, ist sie weg.",
     "hidden": "Verborgener Text",
+    "hiddenImage": "Verborgenes Bild",
     "new": "Neue Notiz, die nach dem Lesen vernichtet wird",
     "opened": "Notiz geöffnet"
   },
@@ -170,6 +183,24 @@
     "name": "Dein Name",
     "size": "{lines} · {size}",
     "send": "Senden"
+  },
+  "image": {
+    "label": "Bild",
+    "alt": "Bild von {name}, {w} × {h}",
+    "open": "In voller Größe anzeigen",
+    "viewer": "Bild in voller Größe",
+    "actual": "Originalgröße",
+    "close": "Schließen",
+    "remove": "Bild entfernen",
+    "preparing": "Bild wird vorbereitet…",
+    "dropHere": "Bilder hier ablegen, um sie hinzuzufügen",
+    "unsupported": "Du kannst nur PNG-, JPEG-, WebP- und GIF-Bilder hinzufügen.",
+    "unreadable": "Dieses Bild konnte nicht gelesen werden.",
+    "tooLarge": "Dieses Bild ist zu groß zum Senden, auch komprimiert.",
+    "gifTooLarge": "Dieses GIF ist zu groß zum Senden. GIFs werden nicht komprimiert, damit die Animation erhalten bleibt.",
+    "tooMany": "Du kannst höchstens {count} Bilder auf einmal hinzufügen.",
+    "previewTag": "Vorschau",
+    "previewNote": "Vorschau in niedriger Auflösung: Das vollständige Bild wurde gesendet, bevor du beigetreten bist."
   },
   "settings": {
     "button": "Einstellungen",

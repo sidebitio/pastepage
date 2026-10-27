@@ -131,6 +131,7 @@
         </div>
       </div>
     </div>
+    <div class="usage" id="usage" aria-hidden="true" hidden><span></span></div>
   </header>
 
   <section class="pinned wrap" id="pinned" aria-labelledby="pinned-title" hidden>
@@ -152,6 +153,7 @@
         <span id="reply-text"></span>
         <button type="button" id="reply-cancel" data-i18n-aria="reply.cancel" data-i18n-title="reply.cancel">&times;</button>
       </div>
+      <div class="attach" id="attach" hidden></div>
       <textarea id="compose-text" rows="3" spellcheck="false" autocapitalize="off" autocorrect="off" data-i18n-placeholder="compose.placeholder" data-i18n-aria="compose.label"></textarea>
       <div class="compose-row">
         <select id="compose-lang" data-i18n-aria="compose.lang" data-i18n-title="compose.lang"></select>
@@ -176,6 +178,25 @@
   </div>
 </div>
 
-<div class="toast" id="toast" role="status" hidden></div>
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" data-i18n-aria="image.viewer" hidden>
+  <div class="viewer-scroll" id="viewer-scroll">
+    <img id="viewer-img" alt="">
+  </div>
+  <div class="viewer-bar">
+    <button type="button" class="viewer-btn" id="viewer-actual" aria-pressed="false" data-i18n="image.actual" hidden></button>
+    <button type="button" class="viewer-btn close" id="viewer-close" data-i18n-aria="image.close" data-i18n-title="image.close">&times;</button>
+  </div>
+</div>
+
+<div class="drop-hint" id="drop-hint" hidden><p data-i18n="image.dropHere"></p></div>
+
+<div class="toasts">
+  <div class="notice" id="notice" role="status" hidden>
+    <p data-i18n="rolled.notice"></p>
+    <button type="button" class="notice-new" id="notice-new" data-i18n="rolled.newSession"></button>
+    <button type="button" class="notice-close" id="notice-close" data-i18n-aria="image.close" data-i18n-title="image.close">&times;</button>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
 </body>
 </html>

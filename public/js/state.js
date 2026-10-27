@@ -1,5 +1,6 @@
 // Browser state reducer: turns the ordered stream of decrypted wire events into
 // a view model (notes, reactions, pins). Pure data in and out: no DOM, no crypto.
+import { IMAGE_TYPES, validImage } from './image.js';
 
 /** Allowed reaction emojis, in display order. */
 export const REACTIONS = ['👍', '❤️', '😂', '🎉', '👀', '✅'];
@@ -10,22 +11,53 @@ export const PIN_PREVIEW_LINES = 4;
 /**
  * Create an empty state.
  * @param {string} myClient - this browser's client id
- * @returns {object} state
+ * @returns {object} state; rolledSeq is the highest seq that rolled off the session (0: none)
  */
 export function createState(myClient) {
-  return { myClient, lastSeq: -1, notes: new Map(), reactions: new Map(), pins: new Set() };
+  return { myClient, lastSeq: -1, rolledSeq: 0, notes: new Map(), reactions: new Map(), pins: new Set() };
 }
 
 /**
- * Empty a state so a snapshot can be replayed.
+ * Record the session's rolled-off point: notes with a seq up to it are no longer on the server. Only goes up;
+ * anything but a safe integer is ignored.
  * @param {object} state
+ * @param {number} rolled
  * @returns {void}
  */
-export function resetState(state) {
+export function setRolled(state, rolled) {
+  if (Number.isSafeInteger(rolled) && rolled > state.rolledSeq) state.rolledSeq = rolled;
+}
+
+/**
+ * Prepare a state for a snapshot. The notes that rolled off the server (seq <= rolled) are not in the snapshot, so
+ * they stay, with their reactions and pins; everything else is emptied and comes back from the snapshot, or is gone
+ * because it was deleted or cleared meanwhile. A clear in the snapshot still removes the kept notes too, and so does
+ * a clear that itself rolled off while the page was away: the welcome's cleared value (the seq of the last clear).
+ * @param {object} state
+ * @param {number} rolled - the snapshot's rolled-off point; anything but a safe integer counts as 0 (keep nothing)
+ * @param {number} [cleared] - the session's last clear; notes up to it are gone; anything but a safe integer counts as 0
+ * @returns {void}
+ */
+export function keepRolled(state, rolled, cleared = 0) {
+  const keep = Number.isSafeInteger(rolled) ? rolled : 0;
+  const gone = Number.isSafeInteger(cleared) ? cleared : 0;
+  const drop = (seq) => seq > keep || seq <= gone;
   state.lastSeq = -1;
-  state.notes.clear();
-  state.reactions.clear();
-  state.pins.clear();
+  for (const seq of state.notes.keys()) if (drop(seq)) state.notes.delete(seq);
+  for (const seq of state.reactions.keys()) if (drop(seq)) state.reactions.delete(seq);
+  for (const seq of state.pins) if (drop(seq)) state.pins.delete(seq);
+}
+
+/**
+ * Take a note out of the state, with its reactions and pin (a delete event, or a rolled-off note deleted on this page).
+ * @param {object} state
+ * @param {number} seq
+ * @returns {void}
+ */
+export function removeNote(state, seq) {
+  state.notes.delete(seq);
+  state.reactions.delete(seq);
+  state.pins.delete(seq);
 }
 
 /**
@@ -41,11 +73,27 @@ export function lineCount(text) {
 }
 
 const isObj = (p) => p !== null && typeof p === 'object';
+const isPositive = (n) => Number.isSafeInteger(n) && n > 0;
+
+/**
+ * Check the description of the full image that a preview payload carries. A missing or odd orig becomes the full
+ * itself, as in validImage.
+ * @param {any} f
+ * @returns {{mime: string, w: number, h: number, bytes: number, orig: {mime: string, bytes: number}}|null}
+ */
+function validFull(f) {
+  if (!isObj(f) || Array.isArray(f)) return null;
+  const { mime, w, h, bytes } = f;
+  if (!IMAGE_TYPES.includes(mime) || !isPositive(w) || !isPositive(h) || !isPositive(bytes)) return null;
+  const o = f.orig;
+  const orig = isObj(o) && IMAGE_TYPES.includes(o.mime) && isPositive(o.bytes) ? { mime: o.mime, bytes: o.bytes } : { mime, bytes };
+  return { mime, w, h, bytes, orig };
+}
 
 function applyNote(state, ev, payload) {
   const rec = {
     seq: ev.seq, ts: ev.ts, client: ev.client, name: '', text: '', lang: '',
-    replyTo: null, broken: false, burn: null, burnedBy: null, burnedClient: null,
+    replyTo: null, broken: false, burn: null, burnedBy: null, burnedClient: null, image: null, preview: false, full: null,
   };
   if (ev.kind === 'burn') {
     rec.text = undefined;
@@ -57,10 +105,22 @@ function applyNote(state, ev, payload) {
     rec.text = payload.t;
     rec.lang = payload.l;
     rec.name = payload.n;
+    // An image note carries its caption in t. An image that fails the checks makes the whole note unreadable.
+    if (payload.image !== undefined || payload.preview === true) {
+      rec.image = validImage(payload.image);
+      // A preview payload carries the preview as its image and describes the full image in full.
+      if (rec.image && payload.preview === true) {
+        rec.full = validFull(payload.full);
+        rec.preview = !!rec.full;
+        if (!rec.full) rec.image = null;
+      }
+      if (!rec.image) { rec.broken = true; rec.text = ''; }
+    }
+    // A reply to an earlier note that is not here (it was deleted or rolled off) keeps replyTo, so the feed can say so.
     const r = payload.r;
     if (Number.isSafeInteger(r)) {
       const target = state.notes.get(r);
-      if (!target || !target.burn) rec.replyTo = r;
+      if (target ? !target.burn : r < ev.seq) rec.replyTo = r;
     }
   }
   state.notes.set(ev.seq, rec);
@@ -95,7 +155,8 @@ function applyMeta(state, ev, payload) {
 }
 
 /**
- * Apply one wire event. Events with seq <= state.lastSeq are ignored.
+ * Apply one wire event. Events with seq <= state.lastSeq are ignored. An 'image' event is a note whose payload is
+ * either the full one or the preview one (preview: true, with the full image described in full).
  * @param {object} state
  * @param {object} ev - wire event
  * @param {object|null|undefined} payload - decrypted payload; null if decryption
@@ -106,6 +167,7 @@ export function applyEvent(state, ev, payload) {
   if (!Number.isSafeInteger(ev.seq) || ev.seq <= state.lastSeq) return;
   switch (ev.kind) {
     case 'note':
+    case 'image':
     case 'burn':
       applyNote(state, ev, payload);
       break;
@@ -113,9 +175,7 @@ export function applyEvent(state, ev, payload) {
       applyMeta(state, ev, payload);
       break;
     case 'delete':
-      state.notes.delete(ev.target);
-      state.reactions.delete(ev.target);
-      state.pins.delete(ev.target);
+      removeNote(state, ev.target);
       break;
     case 'burned': {
       const t = state.notes.get(ev.target);
@@ -136,7 +196,9 @@ function view(state, rec) {
   return {
     seq: rec.seq, ts: rec.ts, client: rec.client, mine: rec.client === state.myClient,
     name: rec.name, text: rec.text, lang: rec.lang, replyTo: rec.replyTo,
-    broken: rec.broken, pinned: state.pins.has(rec.seq), burn: rec.burn, burnedBy: rec.burnedBy,
+    broken: rec.broken, pinned: state.pins.has(rec.seq), burn: rec.burn, burnedBy: rec.burnedBy, image: rec.image,
+    preview: rec.preview, full: rec.full ? { ...rec.full, orig: { ...rec.full.orig } } : null,
+    rolled: rec.seq <= state.rolledSeq,
   };
 }
 
@@ -198,10 +260,13 @@ export function reactionsFor(state, seq) {
  * Info for a reply strip about the note being replied to.
  * @param {object} state
  * @param {number} seq - the replied-to note
- * @returns {{exists: boolean, name?: string, lang?: string, lines?: number}}
+ * @returns {{exists: boolean, name?: string, lang?: string, lines?: number, image?: {w: number, h: number}|null}}
+ *   image: the picture's size for an image note (for a preview, its full image's size), null otherwise
  */
 export function replyInfo(state, seq) {
   const rec = state.notes.get(seq);
   if (!rec) return { exists: false };
-  return { exists: true, name: rec.name, lang: rec.lang, lines: lineCount(rec.text) };
+  const size = rec.preview ? rec.full : rec.image; // a preview tells the full image's size
+  const image = size ? { w: size.w, h: size.h } : null;
+  return { exists: true, name: rec.name, lang: rec.lang, lines: lineCount(rec.text), image };
 }

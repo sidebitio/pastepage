@@ -34,6 +34,13 @@
     "empty": "Nog geen notities.",
     "emptyHint": "Plak hieronder iets, of plak gewoon ergens op deze pagina."
   },
+  "usage": {
+    "title": "Sessie {pct}% vol"
+  },
+  "rolled": {
+    "notice": "Deze sessie heeft de maximale grootte bereikt: de oudste notities maken nu plaats voor nieuwe.",
+    "newSession": "Nieuwe sessie starten"
+  },
   "invite": {
     "button": "Uitnodigen",
     "label": "Stuur dit naar de ander",
@@ -105,6 +112,7 @@
     "lines": { "one": "{count} regel", "other": "{count} regels" },
     "copy": "Kopiëren",
     "copied": "Gekopieerd",
+    "download": "Downloaden",
     "wrap": "Regels afbreken",
     "noWrap": "Niet afbreken",
     "wrapTitle": "Lange regels afbreken (alleen weergave)",
@@ -117,8 +125,11 @@
   },
   "reply": {
     "to": "Antwoord op {name} · {lang} · {lines}",
+    "toImage": "Antwoord op {name} · Afbeelding · {size}",
     "strip": "↪ {name} · {lang} · {lines}",
+    "stripImage": "↪ {name} · Afbeelding · {size}",
     "deleted": "↪ De oorspronkelijke notitie is verwijderd",
+    "gone": "eerdere notitie, niet meer beschikbaar",
     "cancel": "Antwoord annuleren",
     "jump": "Naar de oorspronkelijke notitie"
   },
@@ -146,9 +157,11 @@
     "reveal": "Tonen",
     "hide": "Verbergen",
     "gone": "Deze notitie is al geopend of verwijderd.",
+    "rolled": "Niet meer beschikbaar: de sessie heeft plaatsgemaakt voor nieuwere notities.",
     "forbidden": "Je hebt deze notitie zelf verstuurd, dus je kunt die hier niet openen.",
     "once": "Wordt maar één keer getoond. Na sluiten is de tekst weg.",
     "hidden": "Verborgen tekst",
+    "hiddenImage": "Verborgen afbeelding",
     "new": "Nieuwe notitie die na lezen wordt vernietigd",
     "opened": "Notitie geopend"
   },
@@ -170,6 +183,24 @@
     "name": "Je naam",
     "size": "{lines} · {size}",
     "send": "Versturen"
+  },
+  "image": {
+    "label": "Afbeelding",
+    "alt": "Afbeelding van {name}, {w} bij {h}",
+    "open": "Op ware grootte tonen",
+    "viewer": "Afbeelding op ware grootte",
+    "actual": "Ware grootte",
+    "close": "Sluiten",
+    "remove": "Afbeelding verwijderen",
+    "preparing": "Afbeelding voorbereiden…",
+    "dropHere": "Laat afbeeldingen hier los om ze toe te voegen",
+    "unsupported": "Je kunt alleen PNG-, JPEG-, WebP- en GIF-afbeeldingen toevoegen.",
+    "unreadable": "Deze afbeelding kon niet worden gelezen.",
+    "tooLarge": "Deze afbeelding is te groot om te versturen, ook gecomprimeerd.",
+    "gifTooLarge": "Deze GIF is te groot om te versturen. GIF's worden niet gecomprimeerd, zodat de animatie behouden blijft.",
+    "tooMany": "Je kunt maximaal {count} afbeeldingen tegelijk toevoegen.",
+    "previewTag": "voorbeeld",
+    "previewNote": "Voorbeeld in lage resolutie: de volledige afbeelding is verstuurd voordat je meedeed."
   },
   "settings": {
     "button": "Instellingen",

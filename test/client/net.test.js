@@ -226,3 +226,68 @@ test('close() stops it for good', async (t) => {
   await sleep(100);
   assert.equal(sockets.length, 2);
 });
+
+const addImage = (s, client = 'tester-1') =>
+  api('add', { ...s.base, client, kind: 'image', iv: IV, ct: 'A'.repeat(200000), piv: IV, pct: 'preview' }, s.url);
+
+test('send() sends JSON on the open socket only', async (t) => {
+  const s = await setup(t);
+  const sent = [];
+  const { opts, log } = liveOpts(s);
+  const live = connectLive(opts, class extends WebSocket {
+    send(d) { sent.push(JSON.parse(d)); super.send(d); }
+  });
+  t.after(() => live.close());
+  assert.equal(live.send({ type: 'got', seq: 1 }), false, 'still connecting');
+  await until(() => log.welcomes.length === 1);
+  assert.equal(live.send({ type: 'got', seq: 1 }), true);
+  assert.deepEqual(sent.at(-1), { type: 'got', seq: 1 });
+  live.close();
+  assert.equal(live.send({ type: 'got', seq: 2 }), false, 'closed');
+  assert.equal(sent.length, 2, 'the hello and one receipt');
+});
+
+test('onUsage fires for the welcome, for events and for usage updates', async (t) => {
+  const s = await setup(t);
+  const seen = [];
+  const { opts, log } = liveOpts(s, {
+    onWelcome: (m) => seen.push('welcome'),
+    onEvents: (e) => { seen.push('events'); log.events.push(...e); },
+    onUsage: (used, rolled) => seen.push(['usage', used, rolled]),
+  });
+  const used = () => s.app.store.used(s.app.store.get(s.id));
+  const live = connectLive(opts);
+  t.after(() => live.close());
+  await until(() => seen.includes('welcome'));
+  assert.deepEqual(seen, ['welcome', ['usage', 0, 0]]);
+  const { data } = await addImage(s);
+  await until(() => log.events.length === 1);
+  const withFull = used();
+  assert.ok(withFull > 0);
+  assert.deepEqual(seen.slice(2), ['events', ['usage', withFull, 0]]);
+  assert.equal(live.send({ type: 'got', seq: data.seq }), true);
+  await until(() => seen.length === 5);
+  assert.ok(used() < withFull, 'the server let go of the full');
+  assert.deepEqual(seen[4], ['usage', used(), 0]);
+});
+
+test('the welcome passes the share through as it is', async (t) => {
+  const s = await setup(t);
+  const { opts, log } = liveOpts(s);
+  const live = connectLive(opts);
+  t.after(() => live.close());
+  await until(() => log.welcomes.length === 1);
+  assert.equal(log.welcomes[0].m.share, s.app.store.get(s.id).share);
+});
+
+test('close() ends the connection with code 1000, a clean leave', async (t) => {
+  const s = await setup(t);
+  const codes = [];
+  const { opts, log } = liveOpts(s);
+  const live = connectLive(opts, class extends WebSocket {
+    close(...a) { codes.push(a); super.close(...a); }
+  });
+  await until(() => log.welcomes.length === 1);
+  live.close();
+  assert.deepEqual(codes, [[1000]]);
+});

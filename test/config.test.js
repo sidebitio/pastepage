@@ -6,6 +6,7 @@ import { ERRORS, AppError } from '../src/errors.js';
 
 test('defaults', () => { const c = loadConfig({}); assert.equal(c.port, 3000); assert.equal(c.host, '127.0.0.1'); assert.equal(c.trustProxy, 'loopback'); assert.equal(c.idleSeconds, 120); assert.equal(c.maxNoteBytes, 1500000); assert.equal(c.createPerHour, 30); });
 test('env overrides', () => { const c = loadConfig({ PORT: '8080', HOST: '0.0.0.0', TRUST_PROXY: 'false', IDLE_SECONDS: '60' }); assert.equal(c.port, 8080); assert.equal(c.host, '0.0.0.0'); assert.equal(c.trustProxy, 'false'); assert.equal(c.idleSeconds, 60); });
+test('MAX_PREVIEW_BYTES defaults to 96000 and can be set', () => { assert.equal(loadConfig({}).maxPreviewBytes, 96000); assert.equal(loadConfig({ MAX_PREVIEW_BYTES: '5' }).maxPreviewBytes, 5); });
 test('args beat env', () => { assert.equal(loadConfig({ PORT: '8080' }, { port: '9000' }).port, 9000); });
 test('bad numbers name the variable', () => { assert.throws(() => loadConfig({ PORT: 'abc' }), /PORT/); assert.throws(() => loadConfig({ MAX_EVENTS: '-1' }), /MAX_EVENTS/); });
 test('an invalid TRUST_PROXY is rejected by name', () => { assert.throws(() => loadConfig({ TRUST_PROXY: '10.0.0.0/8' }), /TRUST_PROXY/); assert.equal(loadConfig({ TRUST_PROXY: '10.0.0.5,::1' }).trustProxy, '10.0.0.5,::1'); });

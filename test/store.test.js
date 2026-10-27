@@ -96,12 +96,14 @@ test('append limits', () => {
   ({ store, hash } = setup({ maxEvents: 2 }));
   s = store.create({ id: '11-aa-bb', authHash: hash });
   store.append(s, note()); store.append(s, note());
-  assert.throws(() => store.append(s, note()), { code: 'SESSION_FULL' });
+  store.append(s, note()); // rolls the oldest off instead of failing
+  assert.deepEqual(s.events.map((e) => e.seq), [2, 3]);
 
   ({ store, hash } = setup({ maxSessionBytes: 200 }));
   s = store.create({ id: '11-aa-bb', authHash: hash });
   store.append(s, note('x'.repeat(50))); // 50 + 16 + 64 = 130
-  assert.throws(() => store.append(s, note('x'.repeat(50))), { code: 'SESSION_FULL' });
+  store.append(s, note('x'.repeat(50)));
+  assert.deepEqual(s.events.map((e) => e.seq), [2]);
 
   ({ store, hash } = setup({ maxTotalBytes: 200 }));
   s = store.create({ id: '11-aa-bb', authHash: hash });

@@ -3,6 +3,8 @@
 import { lineCount, noteList } from './state.js';
 import { currentLocale, formatTime } from './i18n.js';
 import { button, capName, detectHighlight, displayText, fmtBytes, isFoldable, langName, make, scrollDelta } from './util.js';
+import { imageDetails } from './image.js';
+import { imageButton } from './imageui.js';
 import {
   pinButton, reactionRow, relabelReactions, relabelReply, renderPinned, resetExtras, setLabel, setPinned, updateReactions,
   updateReply,
@@ -62,17 +64,67 @@ function cardHead(el) {
   return { who, meta, actions };
 }
 
+/**
+ * An image note's text alternative: its caption's first line when it has one, else "Image from Ada, 1280 by 800"
+ * (size: the picture's, or for a preview its full image's).
+ */
+function imageAlt(view, size, text, ctx) {
+  const first = displayText(text || '').split('\n', 1)[0].trim();
+  if (first) return Array.from(first.slice(0, 600)).slice(0, 300).join('');
+  return ctx.t('image.alt', { name: capName(view.name) || ctx.t('note.anon'), w: size.w, h: size.h });
+}
+
+/**
+ * The body of an image note: the picture (a button that opens the viewer) and the caption under it, as plain text.
+ * A preview is shown at its full image's size (size), with a line under it that says it is one.
+ * @returns {{body: HTMLElement, open: HTMLButtonElement, relabel: () => void}}
+ */
+function imageBody(view, image, text, ctx, { size = image, preview = false } = {}) {
+  const body = make('div', 'image-body');
+  const open = imageButton(image, imageAlt(view, size, text, ctx), ctx.t('image.open'), size);
+  body.append(open);
+  const note = preview ? make('p', 'preview-note', ctx.t('image.previewNote')) : null;
+  if (note) body.append(note);
+  if (text) body.append(make('p', 'caption', displayText(text)));
+  const relabel = () => {
+    open.title = ctx.t('image.open');
+    open.querySelector('img').alt = imageAlt(view, size, text, ctx);
+    if (note) note.textContent = ctx.t('image.previewNote');
+  };
+  return { body, open, relabel };
+}
+
+/** Copy and Download buttons for an image (a card's or an opened burn note's). Copy shows "Copied" for a moment. */
+function imageActions(image, seq, ctx) {
+  const { t } = ctx;
+  let resetTimer;
+  const copy = button('copy', t('note.copy'), async () => {
+    if (!(await ctx.actions.copyImage(image))) return;
+    copy.classList.add('done');
+    copy.textContent = t('note.copied');
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { copy.classList.remove('done'); copy.textContent = t('note.copy'); }, 1500);
+  });
+  const download = button('download', t('note.download'), () => ctx.actions.downloadImage(image, seq));
+  return { copy, download };
+}
+
 /** Sender's own view of a burn note: masked (or revealed in this tab), the waiting or read line, Delete. */
 function burnMine(view, ctx, el, actions) {
   const { t } = ctx;
-  const text = ctx.burn.own.get(view.seq);
+  const own = ctx.burn.own.get(view.seq);
+  const text = own?.text;
   const body = make('div', 'burn-body');
   if (view.burn === 'waiting') {
-    const shown = text !== undefined && ctx.burn.revealed.has(view.seq);
-    const mask = make('p', 'burn-mask' + (shown ? ' shown' : ''), shown ? displayText(text) : '••••••');
-    if (!shown) { mask.setAttribute('role', 'img'); mask.setAttribute('aria-label', t('burn.hidden')); }
-    body.append(mask);
-    if (text !== undefined) {
+    const shown = own !== undefined && ctx.burn.revealed.has(view.seq);
+    if (shown && own.image) {
+      body.append(imageBody(view, own.image, text, ctx).body);
+    } else {
+      const mask = make('p', 'burn-mask' + (shown ? ' shown' : ''), shown ? displayText(text) : '••••••');
+      if (!shown) { mask.setAttribute('role', 'img'); mask.setAttribute('aria-label', t(own?.image ? 'burn.hiddenImage' : 'burn.hidden')); }
+      body.append(mask);
+    }
+    if (own !== undefined) {
       // The label changes with the state, like the Pin button; no aria-pressed on top of that.
       actions.append(button('burn-toggle', t(shown ? 'burn.hide' : 'burn.reveal'), () => ctx.actions.revealOwnBurn(view.seq)));
     }
@@ -88,10 +140,15 @@ function burnMine(view, ctx, el, actions) {
 /** Someone else's view: a covered card with an open button, the text while the reader has it open, or the read line. */
 function burnOther(view, ctx, el, actions) {
   const { t } = ctx;
-  const text = ctx.burn.read.get(view.seq);
+  const opened = ctx.burn.read.get(view.seq);
+  const text = opened?.text;
   const ui = ctx.burn.ui.get(view.seq);
   const body = make('div', 'burn-body');
-  if (text !== undefined) {
+  if (opened?.image) {
+    body.append(imageBody(view, opened.image, text, ctx).body, make('p', 'note-burn', t('burn.once')));
+    const { copy, download } = imageActions(opened.image, view.seq, ctx);
+    actions.append(button('burn-close', t('burn.close'), () => ctx.actions.closeBurn(view.seq)), download, copy);
+  } else if (opened !== undefined) {
     const pre = make('pre', 'burn-text', displayText(text)); // Copy below copies the text itself
     body.append(pre, make('p', 'note-burn', t('burn.once')));
     let resetTimer;
@@ -109,6 +166,9 @@ function burnOther(view, ctx, el, actions) {
     body.append(open);
   } else if (view.burn === 'burned' || ui?.closed) {
     body.append(make('p', 'note-burn', view.burnedBy ? t('burn.readBy', { name: capName(view.burnedBy) }) : t('burn.read')));
+  } else if (view.rolled) {
+    // Rolled off the session unopened: the server no longer has it, so there is nothing to open.
+    body.append(make('p', 'note-burn', t('burn.rolled')));
   } else {
     if (!ui?.final) {
       const open = make('button', 'burn-open', t('burn.open'));
@@ -148,6 +208,46 @@ function brokenEl(view, ctx) {
 }
 
 /**
+ * Card for an image note: name, time, "Image · 1280×800 · PNG 3.2 MB → WebP 640 KB", Reply/Pin/Download/Delete/Copy,
+ * the picture and its caption. Copy puts the picture on the clipboard as PNG; Download saves it as it was sent.
+ * Folding and Wrap don't apply. With only the preview (the full image was sent before this person joined): the
+ * details are the full image's, plus "· preview", the preview is shown at the full's size with a line saying so,
+ * and Copy, Download and the viewer use the preview.
+ */
+function imageNoteEl(view, ctx, state) {
+  const { t } = ctx;
+  const image = view.image;
+  const full = view.preview ? view.full : image;
+  const el = make('article', 'note image-note' + (view.mine ? ' mine' : '') + (view.pinned ? ' pinned' : ''));
+  el.dataset.seq = String(view.seq);
+  el.tabIndex = -1; // so a jump from a reply strip or pinned entry can move focus here
+  const { who, meta, actions } = cardHead(el);
+  const reply = button('reply', '', () => ctx.actions.reply(view.seq));
+  const del = button('del', '', () => ctx.actions.del(view.seq));
+  const { copy, download } = imageActions(image, view.seq, ctx);
+  actions.append(reply, pinButton(view, ctx), download, del, copy);
+  el.dataset.replySig = '';
+  updateReply(el, state, view, ctx);
+  const pic = imageBody(view, image, view.text, ctx, { size: full, preview: view.preview });
+  el.append(pic.body);
+  const paint = () => {
+    const name = capName(view.name) || t('note.anon');
+    who.textContent = view.mine ? t('note.you', { name }) : name;
+    meta.replaceChildren(formatTime(view.ts) + ' · ', make('b', '', t('image.label')),
+      ` · ${full.w}×${full.h} · ${imageDetails(full, t)}` + (view.preview ? ` · ${t('image.previewTag')}` : ''));
+    reply.textContent = t('note.reply');
+    del.textContent = t('note.delete');
+    download.textContent = t('note.download');
+    copy.textContent = t(copy.classList.contains('done') ? 'note.copied' : 'note.copy');
+    pic.relabel();
+  };
+  paint();
+  relabelers.set(el, paint);
+  el.append(reactionRow(state, view.seq, ctx));
+  return el;
+}
+
+/**
  * Build the card for one note: name, time, language, line and byte counts, Copy/Wrap/Delete,
  * a line-number gutter and the (highlighted) text. Copy always copies view.text, byte for byte; the code box shows
  * displayText(view.text), so CR and CRLF line endings show as line breaks.
@@ -159,6 +259,7 @@ function brokenEl(view, ctx) {
 export function noteEl(view, ctx, state) {
   if (view.burn) return burnEl(view, ctx);
   if (view.broken) return brokenEl(view, ctx);
+  if (view.image) return imageNoteEl(view, ctx, state);
   const { t } = ctx;
   const el = make('article', 'note' + (view.mine ? ' mine' : '') + (view.pinned ? ' pinned' : ''));
   el.dataset.seq = String(view.seq);
@@ -264,10 +365,10 @@ export function noteEl(view, ctx, state) {
  */
 const sigOf = (view, ctx, locale) => {
   if (view.broken && !view.burn) return `broken:${locale}`;
-  if (!view.burn) return 'note';
+  if (!view.burn) return view.preview ? 'preview' : 'note'; // a preview that turns out to have its full is rebuilt
   // A card showing the reader's open text is left alone when the note's state changes underneath it.
   if (ctx.burn.read.has(view.seq)) return `burn:${locale}:open:${ctx.burn.sig(view.seq)}`;
-  return `burn:${locale}:${view.burn}:${view.burnedBy ?? ''}:${ctx.burn.sig(view.seq)}`;
+  return `burn:${locale}:${view.burn}:${view.burnedBy ?? ''}:${view.rolled ? 'rolled' : ''}:${ctx.burn.sig(view.seq)}`;
 };
 
 /** After a burn card was rebuilt for the user's own action, put focus back on the matching control. */
@@ -358,6 +459,8 @@ export function renderFeed(state, ctx) {
       if (relabel) relabelNoteEl(card.el, view, state, ctx);
       updateNoteEl(card.el, view, state, ctx);
     }
+    // Rolled off the session: the server no longer has it. The card stays on this page, a shade quieter.
+    card.el.classList.toggle('rolled', Boolean(view.rolled));
     prev = card.el;
   }
   primed = true;

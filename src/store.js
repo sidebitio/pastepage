@@ -1,6 +1,6 @@
 // In-memory session store: sessions as append-only lists of encrypted events, with limits, expiry and sweeping.
 import { EventEmitter } from 'node:events';
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { AppError } from './errors.js';
 
 const MIN_HOURS = 1;
@@ -26,9 +26,9 @@ function clampHours(hours, { maxHours, defaultHours }) {
   return Math.min(maxHours, Math.max(MIN_HOURS, Number.isFinite(h) ? h : defaultHours));
 }
 
-/** Bytes an event with ciphertext costs: iv + ct + fixed overhead. Delete and clear events are pushed with 0. */
+/** Bytes an event with ciphertext costs: iv + ct (+ preview iv + ct) + fixed overhead. Delete and clear events are pushed with 0. */
 function eventBytes(ev) {
-  return (ev.ct?.length ?? 0) + (ev.iv?.length ?? 0) + EVENT_OVERHEAD;
+  return (ev.ct?.length ?? 0) + (ev.iv?.length ?? 0) + (ev.piv?.length ?? 0) + (ev.pct?.length ?? 0) + EVENT_OVERHEAD;
 }
 
 /**
@@ -42,6 +42,8 @@ function toWire(ev) {
     case 'note':
     case 'meta':
       return { seq, ts, kind, client: ev.client, iv: ev.iv, ct: ev.ct };
+    case 'image':
+      return { seq, ts, kind, client: ev.client, piv: ev.piv, pct: ev.pct, full: Boolean(ev.ct), ...(ev.ct ? { iv: ev.iv, ct: ev.ct } : {}) };
     case 'burn':
       return { seq, ts, kind, client: ev.client, size: ev.size };
     case 'delete':
@@ -54,7 +56,7 @@ function toWire(ev) {
 }
 
 /**
- * Sessions held in memory. Emits 'event' (id, wireEvent), 'session' (id, { expires })
+ * Sessions held in memory. Emits 'event' (id, wireEvent, { used, rolled }), 'usage' (id, { used, rolled }), 'session' (id, { expires })
  * and 'ended' (id, reason). Has no timers; call sweep() periodically.
  */
 export class SessionStore extends EventEmitter {
@@ -95,6 +97,9 @@ export class SessionStore extends EventEmitter {
       present: 0,
       lastSeq: 0,
       clearedSeq: 0,
+      rolledSeq: 0,
+      share: randomBytes(32).toString('base64url'),
+      members: new Map(),
       events: [],
       bytes: 0,
       emptySince: this.now(),
@@ -126,9 +131,74 @@ export class SessionStore extends EventEmitter {
     session.bytes += bytes;
     this.#totalBytes += bytes;
     const wire = toWire(ev);
-    this.emit('event', session.id, wire);
+    this.emit('event', session.id, wire, { used: this.used(session), rolled: session.rolledSeq });
     return wire;
   }
+
+  /** @returns {number} how full the session is, 0..1000: the larger of bytes and events against their limits */
+  used(session) {
+    const { maxSessionBytes, maxEvents } = this.config;
+    const ratio = Math.max(session.bytes / maxSessionBytes, session.events.length / maxEvents);
+    return Math.min(1000, Math.ceil(ratio * 1000));
+  }
+
+  /** Mark a client as connected to the session. */
+  memberUp(session, client) { session.members.set(client, 'open'); }
+
+  /**
+   * A client left. Clean: forget it and stop waiting for it to receive images (which may release fulls).
+   * Not clean: keep it as 'away' so it still has to receive pending images. At most maxSocketsPerSession clients are
+   * kept away per session; beyond that, the one away longest is let go as if it had left cleanly.
+   */
+  memberDown(session, client, { clean } = {}) {
+    if (!session.members.has(client)) return;
+    if (clean) {
+      if (this.#forget(session, client)) this.#emitUsage(session);
+      return;
+    }
+    session.members.delete(client); // re-added at the end, so the Map's order is the order they went away
+    session.members.set(client, 'away');
+    let away = 0;
+    for (const state of session.members.values()) if (state === 'away') away++;
+    let released = false;
+    for (const [id, state] of session.members) {
+      if (away <= this.config.maxSocketsPerSession) break;
+      if (state !== 'away') continue;
+      if (this.#forget(session, id)) released = true;
+      away--;
+    }
+    if (released) this.#emitUsage(session);
+  }
+
+  /** Forget a member and stop waiting for it to receive images; returns whether that released any full. */
+  #forget(session, client) {
+    session.members.delete(client);
+    let released = false;
+    for (const ev of session.events) {
+      if (ev.pending?.delete(client) && ev.pending.size === 0) { this.#release(session, ev); released = true; }
+    }
+    return released;
+  }
+
+  /** A client has stored an image's full version; once all pending clients have, the server forgets the full. */
+  got(session, client, seq) {
+    const ev = session.events.find((e) => e.seq === seq);
+    if (!ev || ev.kind !== 'image' || !ev.pending?.delete(client)) return;
+    if (ev.pending.size === 0) { this.#release(session, ev); this.#emitUsage(session); }
+  }
+
+  /** Delete an image's full ciphertext and free its bytes. */
+  #release(session, ev) {
+    if (ev.ct === undefined) return;
+    const freed = ev.ct.length + ev.iv.length;
+    delete ev.iv;
+    delete ev.ct;
+    ev.bytes -= freed;
+    session.bytes -= freed;
+    this.#totalBytes -= freed;
+  }
+
+  #emitUsage(session) { this.emit('usage', session.id, { used: this.used(session), rolled: session.rolledSeq }); }
 
   /** Remove stored events from a session, freeing their bytes. */
   #drop(session, predicate) {
@@ -143,30 +213,45 @@ export class SessionStore extends EventEmitter {
   }
 
   /**
-   * Append an encrypted event.
+   * Append an encrypted event. When the session is full, the oldest events are dropped to make room (rolledSeq records the last one).
+   * An image keeps its full ciphertext until every other member has confirmed it with got().
    * @param {object} session
-   * @param {{kind: 'note'|'burn'|'meta', client: string, iv: string, ct: string}} ev
+   * @param {{kind: 'note'|'burn'|'meta'|'image', client: string, iv: string, ct: string, piv?: string, pct?: string}} ev
    * @returns {object} the wire event
-   * @throws {AppError} TOO_LARGE for an oversized event, SESSION_FULL or SERVER_FULL at a limit
+   * @throws {AppError} TOO_LARGE for an oversized event, SERVER_FULL at the server limit
    */
-  append(session, { kind, client, iv, ct }) {
-    const { maxNoteBytes, maxMetaBytes, maxEvents, maxSessionBytes, maxTotalBytes } = this.config;
+  append(session, { kind, client, iv, ct, piv, pct }) {
+    const { maxNoteBytes, maxMetaBytes, maxPreviewBytes, maxEvents, maxSessionBytes, maxTotalBytes } = this.config;
     if (ct.length > (kind === 'meta' ? maxMetaBytes : maxNoteBytes)) throw new AppError('TOO_LARGE');
-    const bytes = eventBytes({ iv, ct });
-    if (session.events.length >= maxEvents || session.bytes + bytes > maxSessionBytes) throw new AppError('SESSION_FULL');
-    if (this.#totalBytes + bytes > maxTotalBytes) throw new AppError('SERVER_FULL');
+    if (kind === 'image' && pct.length > maxPreviewBytes) throw new AppError('TOO_LARGE');
+    const bytes = eventBytes({ iv, ct, piv, pct });
+    if (bytes > maxSessionBytes) throw new AppError('TOO_LARGE');
+    const pending = new Set(kind === 'image' ? session.members.keys() : []);
+    pending.delete(client);
+    const stored = kind === 'image' && pending.size === 0 ? eventBytes({ piv, pct }) : bytes;
+    while (session.events.length && (session.events.length >= maxEvents || session.bytes + stored > maxSessionBytes)) {
+      const old = session.events.shift();
+      session.bytes -= old.bytes;
+      this.#totalBytes -= old.bytes;
+      session.rolledSeq = old.seq;
+    }
+    if (this.#totalBytes + stored > maxTotalBytes) throw new AppError('SERVER_FULL');
+    if (kind === 'image') {
+      if (pending.size === 0) return this.#push(session, { kind, client, piv, pct, pending }, stored);
+      return this.#push(session, { kind, client, iv, ct, piv, pct, pending }, bytes);
+    }
     const fields = kind === 'burn' ? { kind, client, iv, ct, size: ct.length } : { kind, client, iv, ct };
     return this.#push(session, fields, bytes);
   }
 
   /**
-   * Delete a note or burn note, removing its ciphertext, and record a delete event.
+   * Delete a note, image or burn note, removing its ciphertext, and record a delete event.
    * @returns {object} the delete wire event
-   * @throws {AppError} GONE if target is missing or not a note/burn
+   * @throws {AppError} GONE if target is missing or not a note, image or burn note
    */
   deleteNote(session, target) {
     const ev = session.events.find((e) => e.seq === target);
-    if (!ev || (ev.kind !== 'note' && ev.kind !== 'burn')) throw new AppError('GONE');
+    if (!ev || (ev.kind !== 'note' && ev.kind !== 'burn' && ev.kind !== 'image')) throw new AppError('GONE');
     this.#drop(session, (e) => e === ev);
     return this.#push(session, { kind: 'delete', target }, 0);
   }
@@ -229,7 +314,7 @@ export class SessionStore extends EventEmitter {
    *   before the last clear, or beyond the last seq; otherwise the events with seq > since
    */
   eventsSince(session, since) {
-    if (since < 0 || since < session.clearedSeq || since > session.lastSeq) {
+    if (since < 0 || since < session.clearedSeq || since < session.rolledSeq || since > session.lastSeq) {
       return { mode: 'snapshot', events: session.events.map(toWire) };
     }
     return { mode: 'delta', events: session.events.filter((e) => e.seq > since).map(toWire) };

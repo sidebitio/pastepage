@@ -7,16 +7,18 @@
  * @param {(ev: object) => Promise<object|null|undefined>} opts.decrypt - payload,
  *   null on failure, undefined for kinds without ciphertext
  * @param {(ev: object, payload: any) => void} opts.apply - e.g. applyEvent on the state
- * @param {() => void} opts.reset - empties the state (used for snapshots)
+ * @param {(rolled: number|undefined, cleared: number|undefined) => void} opts.reset - prepares the state for a
+ *   snapshot; gets the snapshot's rolled value (the highest seq that rolled off the session) and cleared value (the
+ *   seq of the session's last clear), e.g. keepRolled on the state
  * @param {() => void} opts.onApplied - called once after each batch, to re-render
- * @returns {{push: (events: object[], opts?: {reset?: boolean}) => Promise<void>}}
+ * @returns {{push: (events: object[], opts?: {reset?: boolean, rolled?: number, cleared?: number}) => Promise<void>}}
  */
 export function createPipeline({ decrypt, apply, reset, onApplied }) {
   let chain = Promise.resolve();
 
-  async function runBatch(events, doReset) {
+  async function runBatch(events, doReset, rolled, cleared) {
     try {
-      if (doReset) reset();
+      if (doReset) reset(rolled, cleared);
       for (const ev of events) {
         let payload;
         try { payload = await decrypt(ev); } catch { payload = null; }
@@ -32,11 +34,12 @@ export function createPipeline({ decrypt, apply, reset, onApplied }) {
     /**
      * Queue a batch behind all earlier ones.
      * @param {object[]} events - wire events in order
-     * @param {{reset?: boolean}} [opts] - reset: call reset() before this batch
+     * @param {{reset?: boolean, rolled?: number, cleared?: number}} [opts] - reset: call reset(rolled, cleared) before
+     *   this batch
      * @returns {Promise<void>} resolves when this batch is applied
      */
-    push(events, { reset: doReset = false } = {}) {
-      chain = chain.then(() => runBatch(events, doReset));
+    push(events, { reset: doReset = false, rolled, cleared } = {}) {
+      chain = chain.then(() => runBatch(events, doReset, rolled, cleared));
       return chain;
     },
   };

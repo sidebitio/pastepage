@@ -15,6 +15,9 @@
   --danger-soft: #fbe7e7;
   --gutter: #a5abb9;
   --shadow: 0 1px 2px rgb(20 24 40 / .06), 0 4px 16px rgb(20 24 40 / .05);
+  --rolled-surface: #f8f9fb;  /* a note that rolled off the session: a card halfway back to the page */
+  --rolled-code-bg: #f5f6f9;
+  --gauge: #c8cdd8;           /* the session-size line under the top bar: barely darker than the border it lies on */
 
   --hl-keyword: #2b3fd9;
   --hl-string: #0d7d6c;
@@ -33,6 +36,7 @@
     --line: #272b36; --accent: #8d99ff; --accent-ink: #0e1015; --accent-soft: #1e2350;
     --other: #4cc4b1; --other-soft: #12302b; --danger: #ff7b7b; --danger-soft: #3a1717;
     --gutter: #4b5161; --shadow: 0 1px 2px rgb(0 0 0 / .3);
+    --rolled-surface: #111318; --rolled-code-bg: #0e1014; --gauge: #3d4250;
     --hl-keyword: #8d99ff; --hl-string: #6fd3c2; --hl-number: #f0a36b; --hl-comment: #6b7285;
     --hl-title: #c9a2ff; --hl-attr: #e7c06b;
     color-scheme: dark;
@@ -43,6 +47,7 @@
   --line: #272b36; --accent: #8d99ff; --accent-ink: #0e1015; --accent-soft: #1e2350;
   --other: #4cc4b1; --other-soft: #12302b; --danger: #ff7b7b; --danger-soft: #3a1717;
   --gutter: #4b5161; --shadow: 0 1px 2px rgb(0 0 0 / .3);
+  --rolled-surface: #111318; --rolled-code-bg: #0e1014; --gauge: #3d4250;
   --hl-keyword: #8d99ff; --hl-string: #6fd3c2; --hl-number: #f0a36b; --hl-comment: #6b7285;
   --hl-title: #c9a2ff; --hl-attr: #e7c06b;
   color-scheme: dark;
@@ -144,6 +149,10 @@ h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03e
   background: var(--surface); border-bottom: 1px solid var(--line);
 }
 .top-row { display: flex; align-items: center; gap: 10px; padding-block: 10px; flex-wrap: wrap; }
+/* How full the session is: a 2 px line over the top bar's bottom border, no label, its title says the percentage.
+   The element is a few px taller than the line (transparent, inside the bar's padding) so the title can be hovered. */
+.usage { position: absolute; left: 0; right: 0; bottom: -1px; height: 7px; display: flex; align-items: flex-end; }
+.usage span { display: block; width: 0; height: 2px; background: var(--gauge); transition: width .6s ease; }
 .menu-wrap { position: relative; }
 .menu {
   position: absolute; right: 0; top: calc(100% + 6px); width: 260px; z-index: 6;
@@ -180,6 +189,9 @@ h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03e
   min-width: 0; overflow: hidden;
 }
 .note.fresh { animation: fresh 1.6s ease-out; }
+/* A note that rolled off the session (the server no longer has it; a reload drops it): the same card, its
+   backgrounds a step closer to the page's, so it quietly recedes. Its parts take the shade from these tokens. */
+.note.rolled { --surface: var(--rolled-surface); --code-bg: var(--rolled-code-bg); }
 @keyframes fresh { from { box-shadow: 0 0 0 3px var(--other); } to { box-shadow: 0 0 0 3px transparent; } }
 .note-head {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -257,12 +269,33 @@ html.full-notes .more { display: none; }
 }
 .confirm-box { padding: 20px; max-width: 380px; width: 100%; }
 .confirm-box p { margin: 0 0 18px; font-weight: 500; }
-.toast {
+/* The toast and the notice share one spot just above the message box, the notice on top when both show.
+   --composer-h is the message box's height (app.js keeps it current); off the room it is unset and the old spot holds. */
+.toasts {
   position: fixed; left: 50%; transform: translateX(-50%); z-index: 30;
-  bottom: calc(120px + env(safe-area-inset-bottom, 0px));
-  background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;
-  max-width: calc(100vw - 32px); text-align: center;
+  bottom: calc(var(--composer-h, calc(108px + env(safe-area-inset-bottom, 0px))) + 12px);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: max-content; max-width: calc(100vw - 32px); pointer-events: none;
 }
+.toasts > * { pointer-events: auto; }
+.toast {
+  background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;
+  max-width: 100%; text-align: center;
+}
+/* A notice stays until closed and can hold a button (the session reached its maximum size). */
+.notice {
+  display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; max-width: 560px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 8px 6px 8px 14px; font-size: 14px;
+}
+.notice p { margin: 0; flex: 1 1 18em; color: var(--ink); }
+.notice-new {
+  border: 1px solid var(--accent-soft); background: var(--accent-soft); color: var(--accent);
+  border-radius: 6px; padding: 5px 10px; font-size: 13px; font-weight: 600; white-space: nowrap;
+}
+.notice-new:hover { border-color: var(--accent); }
+.notice-close { border: 0; background: none; font-size: 18px; line-height: 1; padding: 4px 8px; color: var(--muted); border-radius: 6px; }
+.notice-close:hover { color: var(--ink); background: var(--bg); }
 
 /* ---------- connection, invite, settings ---------- */
 .pill.live.off { color: var(--muted); background: var(--bg); border-color: var(--line); }
@@ -350,7 +383,7 @@ button.reply-strip:hover { color: var(--ink); }
 .picker button { border: 1px solid transparent; background: none; border-radius: 6px; padding: 2px 6px; font-size: 16px; }
 .picker button:hover { background: var(--bg); border-color: var(--line); }
 
-.pinned { padding-block: 14px 0; }
+section.pinned { padding-block: 14px 0; } /* the strip, not a pinned note card (.note.pinned) */
 .pinned-head { display: flex; align-items: center; gap: 10px; }
 .pinned-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--muted); }
 .pinned-toggle { border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; padding: 4px 6px; }
@@ -375,3 +408,77 @@ button.reply-strip:hover { color: var(--ink); }
 .note-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 8px 8px 12px; border-top: 1px solid var(--line); font-size: 13px; }
 .note-foot .reactions { border-top: 0; padding: 0; }
 html:not(.full-notes) .note.foldable:not(.expanded) .note-foot .note-actions { display: none; }
+
+/* ---------- images ---------- */
+/* An image note: the picture fits the card's width and is at most as tall as a folded note (COLLAPSE_LINES lines of
+   code plus the code box's padding); its size comes from the image's (--w, --h, set on the button in imageui.js), so the
+   card has its final size before the picture is decoded. The caption is the note's text, unhighlighted. */
+.image-body {
+  --img-max-h: calc(24px + 28 * 20.8px);
+  background: var(--code-bg); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+}
+.img-open {
+  display: block; border: 0; padding: 0; background: none; cursor: zoom-in; border-radius: 6px; line-height: 0;
+  width: min(100%, calc(var(--w) * 1px), calc(var(--img-max-h) * var(--w) / var(--h)));
+}
+.img-open img {
+  display: block; width: 100%; height: auto; border-radius: 6px; aspect-ratio: var(--w) / var(--h); box-shadow: 0 0 0 1px var(--line);
+  background: repeating-conic-gradient(var(--line) 0 25%, transparent 0 50%) 0 0 / 16px 16px; /* shows transparency */
+}
+.img-open:focus-visible { outline-offset: 3px; }
+.image-body .caption {
+  margin: 0; align-self: stretch; font: 13px/1.6 var(--font-code); white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4;
+}
+.burn-body .image-body { align-self: stretch; padding: 0; background: none; }
+/* Only the preview is here (the full image was sent before this person joined): a quiet line under the picture. */
+.image-body .preview-note { margin: -4px 0 0; color: var(--muted); font-size: 13px; }
+
+/* Images waiting above the message box. */
+.attach { display: flex; flex-wrap: wrap; gap: 8px; }
+.attach-item {
+  display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 100%;
+  border: 1px solid var(--line); border-radius: 8px; padding: 4px; background: var(--bg); font-size: 13px;
+}
+.attach-thumb { width: 64px; height: 44px; object-fit: contain; border-radius: 5px; flex: none; background: var(--surface); border: 1px solid var(--line); }
+.attach-item.busy .attach-thumb { background: var(--line); }
+.attach-item.busy .attach-thumb { animation: attach-busy 1s ease-in-out infinite alternate; }
+@keyframes attach-busy { from { opacity: .35; } to { opacity: 1; } }
+.attach-info { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-info b { color: var(--ink); font-weight: 600; }
+.attach-remove { border: 0; background: none; font-size: 18px; line-height: 1; padding: 4px 8px; color: var(--muted); border-radius: 6px; }
+.attach-remove:hover { color: var(--danger); background: var(--danger-soft); }
+.attach-remove:disabled { opacity: .4; cursor: default; }
+
+/* Files dragged over the room page. */
+.drop-hint {
+  position: fixed; inset: 10px; z-index: 15; pointer-events: none; display: grid; place-items: center;
+  border: 3px dashed var(--accent); border-radius: 16px; background: rgb(43 63 217 / .08);
+}
+.drop-hint p { margin: 0; padding: 10px 18px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+/* The full-size viewer: the whole picture fits the window (never enlarged); "Actual size" shows it pixel for pixel. */
+.viewer { position: fixed; inset: 0; z-index: 25; background: rgb(8 9 14 / .92); color: #fff; }
+html.viewer-open { overflow: hidden; }
+.viewer-scroll {
+  position: absolute; inset: 0; overflow: auto; display: flex; padding: 56px 16px 16px; overscroll-behavior: contain;
+}
+.viewer-scroll img { margin: auto; display: block; max-width: 100%; max-height: 100%; cursor: default; }
+.viewer.zoomable .viewer-scroll img { cursor: zoom-in; }
+.viewer-scroll img.actual { max-width: none; max-height: none; cursor: zoom-out; }
+.viewer-bar { position: absolute; top: 8px; right: 8px; display: flex; gap: 8px; }
+.viewer-btn {
+  border: 1px solid rgb(255 255 255 / .25); background: rgb(20 22 30 / .8); color: #fff; border-radius: 8px;
+  padding: 6px 12px; font-size: 14px; font-weight: 600;
+}
+.viewer-btn:hover { background: rgb(60 64 80 / .9); }
+.viewer-btn.close { font-size: 20px; line-height: 1; padding: 5px 11px; }
+.viewer-btn[aria-pressed="true"] { background: #fff; color: #111; }
+.viewer :focus-visible { outline-color: #fff; }
+
+/* A pinned image note: a small thumbnail and the caption's first line. */
+.pin-image-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--line);
+  background: var(--code-bg); cursor: pointer; min-width: 0;
+}
+.pin-thumb { height: 40px; width: auto; max-width: 96px; object-fit: cover; border-radius: 4px; flex: none; }
+.pin-caption { font: 13px/1.6 var(--font-code); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }

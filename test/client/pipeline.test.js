@@ -53,3 +53,30 @@ test('decrypt throw becomes null; errors do not break the chain', async () => {
     assert.equal(errs.length, 2);
   } finally { console.error = orig; }
 });
+
+test('the snapshot\'s rolled value reaches reset', async () => {
+  const resets = [];
+  const p = createPipeline({
+    decrypt: async () => null,
+    apply: () => {},
+    reset: (rolled) => resets.push(rolled),
+    onApplied: () => {},
+  });
+  await p.push([{ seq: 9 }], { reset: true, rolled: 7 });
+  await p.push([{ seq: 10 }], { rolled: 8 }); // no reset: reset is not called
+  await p.push([], { reset: true });
+  assert.deepEqual(resets, [7, undefined]);
+});
+
+test('the snapshot\'s cleared value reaches reset next to rolled', async () => {
+  const resets = [];
+  const p = createPipeline({
+    decrypt: async () => null,
+    apply: () => {},
+    reset: (rolled, cleared) => resets.push([rolled, cleared]),
+    onApplied: () => {},
+  });
+  await p.push([{ seq: 9 }], { reset: true, rolled: 7, cleared: 4 });
+  await p.push([], { reset: true });
+  assert.deepEqual(resets, [[7, 4], [undefined, undefined]]);
+});
