@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-27
+
+### Changed
+
+- The name in the header and on the "session ended" page ends in a small square, and the favicon is a P with that square, matching the website.
+
+### Fixed
+
+- A multi-line SQL query is shown as SQL. It was often detected as VB.NET, whose query syntax uses the same words; a note that starts like an SQL statement (SELECT, INSERT INTO, UPDATE … SET, DELETE FROM, CREATE, ALTER, DROP or WITH … AS) is now highlighted as SQL straight away.
+
 ## [0.2.0] - 2026-10-27
 
 ### Added
@@ -42,6 +52,7 @@ The first public release.
 - Per-IP wrong-password lockout, a limit on new sessions per IP, and per-note, per-session and server-wide size limits.
 - The `pastepage` command, configuration through environment variables or a `.env` file, and example configurations for systemd, Caddy, nginx and Apache.
 
-[Unreleased]: https://github.com/sidebitio/pastepage/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/sidebitio/pastepage/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/sidebitio/pastepage/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sidebitio/pastepage/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sidebitio/pastepage/releases/tag/v0.1.0

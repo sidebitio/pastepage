@@ -1,6 +1,6 @@
 {
   "name": "pastepage",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Paste text back and forth, live and end-to-end encrypted. Self-hosted.",
   "type": "module",
   "bin": {
