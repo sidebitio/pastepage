@@ -139,7 +139,7 @@ Settings are environment variables. Every one has a safe default, so you only se
 | `MAX_HOURS` | `168` | The longest a session can be set to last, in hours (default 168, which is 7 days). If it is lower than an option in the page's expiry menu, the longer choices are capped to it. |
 | `MAX_NOTE_BYTES` | `1500000` | Largest single note, measured after encryption. That fits about 1.1 MB of plain text, less if the text has many line breaks, tabs, quotes or backslashes. Browsers make images fit this default (at most 800 KB of image per note); with a lower value, larger images are refused as too large. |
 | `MAX_PREVIEW_BYTES` | `96000` | Largest encrypted preview of an image. An image whose preview is larger is sent as an ordinary note and kept in full on the server. |
-| `MAX_SESSION_BYTES` | `12000000` | Most encrypted data one session can hold. Past this, the oldest events are dropped to make room. |
+| `MAX_SESSION_BYTES` | `12000000` | Most encrypted data one session can hold. Past this, the oldest events are dropped to make room. Must be at least `MAX_NOTE_BYTES` + `MAX_PREVIEW_BYTES` + 96, the room one image note can take; the server won't start otherwise. |
 | `MAX_EVENTS` | `2000` | Most events one session can hold (notes, reactions, pins, deletions and so on). Past this, the oldest events are dropped to make room. |
 | `MAX_SESSIONS` | `1000` | Most sessions on the server at once. |
 | `MAX_TOTAL_BYTES` | `268435456` | Most encrypted data across all sessions together (256 MiB). |

@@ -1,7 +1,7 @@
 // Tests for config loading: defaults, env overrides, argument precedence, validation.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadConfig } from '../src/config.js';
+import { loadConfig, minSessionBytes } from '../src/config.js';
 import { ERRORS, AppError } from '../src/errors.js';
 
 test('defaults', () => { const c = loadConfig({}); assert.equal(c.port, 3000); assert.equal(c.host, '127.0.0.1'); assert.equal(c.trustProxy, 'loopback'); assert.equal(c.idleSeconds, 120); assert.equal(c.maxNoteBytes, 1500000); assert.equal(c.createPerHour, 30); });
@@ -11,6 +11,13 @@ test('args beat env', () => { assert.equal(loadConfig({ PORT: '8080' }, { port: 
 test('bad numbers name the variable', () => { assert.throws(() => loadConfig({ PORT: 'abc' }), /PORT/); assert.throws(() => loadConfig({ MAX_EVENTS: '-1' }), /MAX_EVENTS/); });
 test('an invalid TRUST_PROXY is rejected by name', () => { assert.throws(() => loadConfig({ TRUST_PROXY: '10.0.0.0/8' }), /TRUST_PROXY/); assert.equal(loadConfig({ TRUST_PROXY: '10.0.0.5,::1' }).trustProxy, '10.0.0.5,::1'); });
 test('MAX_HOURS below 1 is rejected, 1 is allowed', () => { assert.throws(() => loadConfig({ MAX_HOURS: '0' }), /Invalid MAX_HOURS: "0"/); assert.equal(loadConfig({ MAX_HOURS: '1' }).maxHours, 1); });
+test('MAX_SESSION_BYTES must hold one full image note', () => {
+  assert.equal(minSessionBytes(loadConfig({})), 1_596_096);
+  assert.throws(() => loadConfig({ MAX_SESSION_BYTES: '1000000' }), /Invalid MAX_SESSION_BYTES: "1000000" is less than one image note can take \(1596096/);
+  assert.equal(loadConfig({ MAX_SESSION_BYTES: '1596096' }).maxSessionBytes, 1_596_096);
+  // Smaller notes and previews lower the minimum (the public demo: 100 KB notes in a 1 MB session).
+  assert.equal(loadConfig({ MAX_NOTE_BYTES: '100000', MAX_SESSION_BYTES: '1000000' }).maxSessionBytes, 1_000_000);
+});
 test('port 0 allowed', () => { assert.equal(loadConfig({ PORT: '0' }).port, 0); });
 test('connection limits have defaults and are not read from the environment', () => {
   const env = {

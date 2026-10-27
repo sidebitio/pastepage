@@ -58,11 +58,20 @@ const ENV_NAMES = {
 const STRING_FIELDS = new Set(['host', 'trustProxy']);
 
 /**
+ * The room the largest event needs in a session: a full image and its preview at their limits, their two IVs
+ * (16 characters each) and the store's 64 bytes per event. A smaller MAX_SESSION_BYTES would refuse such a note.
+ * @param {{maxNoteBytes: number, maxPreviewBytes: number}} c
+ * @returns {number}
+ */
+export const minSessionBytes = (c) => c.maxNoteBytes + c.maxPreviewBytes + 2 * 16 + 64;
+
+/**
  * Build the configuration. Precedence: args, then env, then DEFAULTS.
  * @param {Record<string, string|undefined>} [env] environment variables
  * @param {Record<string, string|number|undefined>} [args] overrides keyed by config field name
  * @returns {typeof DEFAULTS} the resolved config
- * @throws {Error} 'Invalid NAME: "value"' when a number is not a non-negative integer (MAX_HOURS: at least 1), or TRUST_PROXY is not understood
+ * @throws {Error} 'Invalid NAME: "value"' when a number is not a non-negative integer (MAX_HOURS: at least 1), MAX_SESSION_BYTES
+ *   is below minSessionBytes, or TRUST_PROXY is not understood
  */
 export function loadConfig(env = process.env, args = {}) {
   const config = { ...DEFAULTS };
@@ -79,6 +88,9 @@ export function loadConfig(env = process.env, args = {}) {
       config[field] = Number(text);
       if (field === 'maxHours' && config[field] < 1) throw new Error(`Invalid ${name}: "${raw}"`);
     }
+  }
+  if (config.maxSessionBytes < minSessionBytes(config)) {
+    throw new Error(`Invalid MAX_SESSION_BYTES: "${config.maxSessionBytes}" is less than one image note can take (${minSessionBytes(config)}: MAX_NOTE_BYTES + MAX_PREVIEW_BYTES + 96)`);
   }
   try {
     parseTrustProxy(config.trustProxy);

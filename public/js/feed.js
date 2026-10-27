@@ -128,7 +128,8 @@ function burnMine(view, ctx, el, actions) {
       // The label changes with the state, like the Pin button; no aria-pressed on top of that.
       actions.append(button('burn-toggle', t(shown ? 'burn.hide' : 'burn.reveal'), () => ctx.actions.revealOwnBurn(view.seq)));
     }
-    body.append(make('p', 'note-burn', t('burn.waiting')));
+    // Rolled off unread: nobody can open it any more, so it is no longer waiting.
+    body.append(make('p', 'note-burn', t(view.rolled ? 'burn.rolled' : 'burn.waiting')));
     // Delete only while nobody has read it: once opened, the reader's copy is theirs to close.
     actions.append(button('del', t('note.delete'), () => ctx.actions.del(view.seq)));
   } else {

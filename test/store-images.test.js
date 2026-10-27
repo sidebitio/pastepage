@@ -1,7 +1,7 @@
 // Tests for image notes (held in full until delivered), rolling sessions and the usage gauge in the store.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadConfig } from '../src/config.js';
+import { loadConfig, minSessionBytes } from '../src/config.js';
 import { SessionStore, hashAuth } from '../src/store.js';
 
 const IV = 'AAAAAAAAAAAAAAAA';
@@ -188,4 +188,14 @@ test('deleting an image frees its bytes', () => {
   assert.equal(del.kind, 'delete');
   assert.equal(s.bytes, 0);
   assert.equal(store.totalBytes, 0);
+});
+
+test('a session of exactly minSessionBytes takes the largest image note, and one byte less refuses it', () => {
+  const limits = { maxNoteBytes: 1000, maxPreviewBytes: 300 };
+  const largest = { kind: 'image', client: 'a', iv: IV, ct: 'x'.repeat(1000), piv: IV, pct: 'p'.repeat(300) };
+  const { store, s } = setup({ ...limits, maxSessionBytes: minSessionBytes(limits) });
+  store.memberUp(s, 'b'); // someone else is there, so the full image is kept and counted
+  assert.doesNotThrow(() => store.append(s, largest));
+  const small = setup({ ...limits, maxSessionBytes: minSessionBytes(limits) - 1 });
+  assert.throws(() => small.store.append(small.s, largest), { code: 'TOO_LARGE' });
 });

@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Sessions roll over instead of refusing notes: when `MAX_SESSION_BYTES` or `MAX_EVENTS` would be exceeded, the oldest events are dropped. Open pages keep showing notes that rolled off, on a slightly different background, until reloaded, and show a notice once. A thin line under the header shows how full the session is.
 - A Long notes setting (Fold or Show in full) in the settings menu: notes over 28 lines are folded behind "Show all" by default, and "Show in full" shows them completely. It applies at once to every note on screen and is remembered in the browser.
 
+### Changed
+
+- The server refuses to start when `MAX_SESSION_BYTES` is smaller than one image note can take (`MAX_NOTE_BYTES` + `MAX_PREVIEW_BYTES` + 96 bytes), instead of refusing every large image later with "too large".
+
 ### Fixed
 
 - A pinned note's card no longer gets extra space above its header.
