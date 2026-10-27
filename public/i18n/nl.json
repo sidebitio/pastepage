@@ -1,18 +1,13 @@
 {
-  "start": {
-    "lede": "Plak tekst heen en weer, live. Wat je plakt, komt aan zoals je het plakte, inclusief regeleinden.",
-    "privacy": "Notities worden in je browser versleuteld voordat ze worden verstuurd, zodat de server ze alleen versleuteld bewaart, in het geheugen en nooit op schijf. Een sessie wordt verwijderd als iemand die beëindigt, als die verloopt of kort nadat iedereen is vertrokken.",
-    "title": "Nieuwe sessie",
-    "hint": "Je krijgt een willekeurige sessienaam en een willekeurig wachtwoord om naar de ander te sturen.",
-    "hours": "Alles verwijderen na",
-    "name": "Je naam",
-    "namePlaceholder": "Optioneel",
-    "go": "Nieuwe sessie starten",
-    "busy": "Starten…"
+  "draft": {
+    "lede": "Plak of typ hieronder. Er verlaat niets deze browser tot je op Versturen drukt: dan wordt er een sessie gemaakt, met een link om te delen.",
+    "join": "Of neem deel aan een sessie",
+    "privacy": "Notities worden in je browser versleuteld voordat ze worden verstuurd, zodat de server ze alleen versleuteld bewaart, in het geheugen en nooit op schijf. Een sessie wordt verwijderd als iemand die beëindigt, als die verloopt of kort nadat iedereen is vertrokken."
   },
   "join": {
+    "button": "Deelnemen",
     "title": "Deelnemen aan een sessie",
-    "hint": "Gebruik de sessienaam en het wachtwoord die je hebt gekregen, of open de link.",
+    "hint": "Plak de link die je kreeg, of vul de sessienaam en het wachtwoord in.",
     "id": "Sessienaam",
     "idPlaceholder": "12-dancing-apes",
     "pass": "Wachtwoord",
@@ -33,6 +28,13 @@
     "newNote": "Nieuwe notitie van {name}",
     "empty": "Nog geen notities.",
     "emptyHint": "Plak hieronder iets, of plak gewoon ergens op deze pagina."
+  },
+  "bar": {
+    "label": "Uitnodigen",
+    "ready": "Sessie klaar. Stuur deze link naar de ander:",
+    "copy": "Link kopiëren",
+    "more": "Meer opties",
+    "close": "Sluiten"
   },
   "usage": {
     "title": "Sessie {pct}% vol"
@@ -68,7 +70,9 @@
     "label": "Alles verwijderen over",
     "set": "Alles wordt over {time} verwijderd.",
     "clear": "Alle notities wissen",
-    "end": "Sessie beëindigen en verwijderen"
+    "end": "Sessie beëindigen en verwijderen",
+    "after": "Wordt verwijderd na {time}",
+    "afterTitle": "Kies wanneer deze sessie wordt verwijderd"
   },
   "time": {
     "d": "{d} d",
@@ -91,10 +95,7 @@
   },
   "confirm": {
     "cancel": "Annuleren",
-    "clear": {
-      "one": "De enige notitie wissen? Die verdwijnt voor iedereen in deze sessie.",
-      "other": "Alle {count} notities wissen? Ze verdwijnen voor iedereen in deze sessie."
-    },
+    "clear": { "one": "De enige notitie wissen? Die verdwijnt voor iedereen in deze sessie.", "other": "Alle {count} notities wissen? Ze verdwijnen voor iedereen in deze sessie." },
     "clearYes": "Alles wissen",
     "end": "Deze sessie beëindigen? Alle notities worden van de server verwijderd en de link werkt voor niemand meer.",
     "endYes": "Sessie beëindigen"

@@ -1,18 +1,13 @@
 {
-  "start": {
-    "lede": "Pega texto de un lado a otro, en directo. Lo que pegas llega tal como lo pegaste, incluidos los finales de línea.",
-    "privacy": "Las notas se cifran en tu navegador antes de enviarse, así que el servidor solo las guarda cifradas, en memoria y nunca en disco. Una sesión se elimina cuando alguien la finaliza, cuando caduca o poco después de que todos se hayan ido.",
-    "title": "Nueva sesión",
-    "hint": "Recibes un nombre de sesión y una contraseña aleatorios para enviar a la otra persona.",
-    "hours": "Eliminar todo después de",
-    "name": "Tu nombre",
-    "namePlaceholder": "Opcional",
-    "go": "Iniciar nueva sesión",
-    "busy": "Iniciando…"
+  "draft": {
+    "lede": "Pega o escribe abajo. Nada sale de este navegador hasta que pulses Enviar: entonces se crea una sesión, con un enlace para compartir.",
+    "join": "Unirse a una sesión en su lugar",
+    "privacy": "Las notas se cifran en tu navegador antes de enviarse, así que el servidor solo las guarda cifradas, en memoria y nunca en disco. Una sesión se elimina cuando alguien la finaliza, cuando caduca o poco después de que todos se hayan ido."
   },
   "join": {
+    "button": "Unirse",
     "title": "Unirse a una sesión",
-    "hint": "Usa el nombre de sesión y la contraseña que te enviaron, o abre el enlace.",
+    "hint": "Pega el enlace que te enviaron, o escribe el nombre de sesión y la contraseña.",
     "id": "Nombre de sesión",
     "idPlaceholder": "12-dancing-apes",
     "pass": "Contraseña",
@@ -33,6 +28,13 @@
     "newNote": "Nueva nota de {name}",
     "empty": "Todavía no hay notas.",
     "emptyHint": "Pega algo abajo, o pega en cualquier parte de esta página."
+  },
+  "bar": {
+    "label": "Invitar",
+    "ready": "Sesión lista. Envía este enlace a la otra persona:",
+    "copy": "Copiar enlace",
+    "more": "Más opciones",
+    "close": "Cerrar"
   },
   "usage": {
     "title": "Sesión llena al {pct} %"
@@ -68,7 +70,9 @@
     "label": "Eliminar todo en",
     "set": "Todo se eliminará en {time}.",
     "clear": "Borrar todas las notas",
-    "end": "Finalizar la sesión y eliminarla"
+    "end": "Finalizar la sesión y eliminarla",
+    "after": "Se elimina tras {time}",
+    "afterTitle": "Elige cuándo se elimina esta sesión"
   },
   "time": {
     "d": "{d} d",
@@ -91,10 +95,7 @@
   },
   "confirm": {
     "cancel": "Cancelar",
-    "clear": {
-      "one": "¿Borrar la única nota? Desaparece para todos en esta sesión.",
-      "other": "¿Borrar las {count} notas? Desaparecen para todos en esta sesión."
-    },
+    "clear": { "one": "¿Borrar la única nota? Desaparece para todos en esta sesión.", "other": "¿Borrar las {count} notas? Desaparecen para todos en esta sesión." },
     "clearYes": "Borrar todo",
     "end": "¿Finalizar esta sesión? Todas las notas se eliminan del servidor y el enlace deja de funcionar para todos.",
     "endYes": "Finalizar sesión"

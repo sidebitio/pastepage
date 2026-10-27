@@ -1,18 +1,13 @@
 {
-  "start": {
-    "lede": "Text einfügen und live hin- und herschicken. Was du einfügst, kommt so an, wie du es eingefügt hast, samt Zeilenenden.",
-    "privacy": "Notizen werden in deinem Browser verschlüsselt, bevor sie gesendet werden. Der Server bekommt sie also nur verschlüsselt und hält sie im Arbeitsspeicher, nie auf der Festplatte. Eine Sitzung wird gelöscht, wenn jemand sie beendet, wenn sie abläuft oder kurz nachdem alle gegangen sind.",
-    "title": "Neue Sitzung",
-    "hint": "Du bekommst einen zufälligen Sitzungsnamen und ein zufälliges Passwort, die du der anderen Person schickst.",
-    "hours": "Alles löschen nach",
-    "name": "Dein Name",
-    "namePlaceholder": "Optional",
-    "go": "Neue Sitzung starten",
-    "busy": "Wird gestartet…"
+  "draft": {
+    "lede": "Füge unten etwas ein oder tippe los. Nichts verlässt diesen Browser, bis du auf Senden drückst: Dann entsteht eine Sitzung mit einem Link zum Teilen.",
+    "join": "Stattdessen einer Sitzung beitreten",
+    "privacy": "Notizen werden in deinem Browser verschlüsselt, bevor sie gesendet werden. Der Server bekommt sie also nur verschlüsselt und hält sie im Arbeitsspeicher, nie auf der Festplatte. Eine Sitzung wird gelöscht, wenn jemand sie beendet, wenn sie abläuft oder kurz nachdem alle gegangen sind."
   },
   "join": {
+    "button": "Beitreten",
     "title": "Einer Sitzung beitreten",
-    "hint": "Gib den Sitzungsnamen und das Passwort ein, die du bekommen hast, oder öffne den Link.",
+    "hint": "Füge den Link ein, den du bekommen hast, oder gib Sitzungsname und Passwort ein.",
     "id": "Sitzungsname",
     "idPlaceholder": "12-dancing-apes",
     "pass": "Passwort",
@@ -33,6 +28,13 @@
     "newNote": "Neue Notiz von {name}",
     "empty": "Noch keine Notizen.",
     "emptyHint": "Füge unten etwas ein oder einfach irgendwo auf dieser Seite."
+  },
+  "bar": {
+    "label": "Einladen",
+    "ready": "Sitzung bereit. Schicke diesen Link an die andere Person:",
+    "copy": "Link kopieren",
+    "more": "Weitere Optionen",
+    "close": "Schließen"
   },
   "usage": {
     "title": "Sitzung zu {pct} % voll"
@@ -68,7 +70,9 @@
     "label": "Alles löschen in",
     "set": "Alles wird in {time} gelöscht.",
     "clear": "Alle Notizen löschen",
-    "end": "Sitzung beenden und löschen"
+    "end": "Sitzung beenden und löschen",
+    "after": "Löschung nach {time}",
+    "afterTitle": "Wähle, wann diese Sitzung gelöscht wird"
   },
   "time": {
     "d": "{d} Tg.",
@@ -91,10 +95,7 @@
   },
   "confirm": {
     "cancel": "Abbrechen",
-    "clear": {
-      "one": "Die einzige Notiz löschen? Sie verschwindet für alle in dieser Sitzung.",
-      "other": "Alle {count} Notizen löschen? Sie verschwinden für alle in dieser Sitzung."
-    },
+    "clear": { "one": "Die einzige Notiz löschen? Sie verschwindet für alle in dieser Sitzung.", "other": "Alle {count} Notizen löschen? Sie verschwinden für alle in dieser Sitzung." },
     "clearYes": "Alle löschen",
     "end": "Diese Sitzung beenden? Alle Notizen werden vom Server gelöscht und der Link funktioniert für niemanden mehr.",
     "endYes": "Sitzung beenden"

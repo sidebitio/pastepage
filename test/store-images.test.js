@@ -47,14 +47,29 @@ test('an image is held in full until the other member has it', () => {
   assert.deepEqual(Object.keys(usages[0]).sort(), ['rolled', 'used']);
 });
 
-test('an image with no other members is stored without its full', () => {
-  const { store, s } = setup();
+test('an image sent while alone is kept in full until the first other member has it', () => {
+  const { store, s, usages } = setup();
   store.memberUp(s, 'a');
   const wire = store.append(s, image('a'));
-  assert.equal(wire.full, false);
-  assert.ok(!('ct' in wire));
-  assert.equal(s.bytes, IV.length + 'preview'.length + 64);
+  assert.equal(wire.full, true);
+  assert.equal(wire.ct, 'full-image-ciphertext');
+  assert.ok(!('firstOther' in wire));
+  const held = s.bytes;
+  store.got(s, 'a', 1); // the sender itself
+  store.got(s, 'zzz', 1); // not in the session
+  assert.equal(wires(store, s)[0].full, true);
+  assert.equal(usages.length, 0);
+  store.memberUp(s, 'b'); // joins later and saves it
+  store.got(s, 'b', 1);
+  const w = wires(store, s)[0];
+  assert.equal(w.full, false);
+  assert.ok(!('ct' in w));
+  assert.equal(held - s.bytes, IV.length + 'full-image-ciphertext'.length);
   assert.equal(store.totalBytes, s.bytes);
+  assert.equal(usages.length, 1);
+  store.memberUp(s, 'c');
+  store.got(s, 'c', 1); // a later joiner changes nothing
+  assert.equal(usages.length, 1);
 });
 
 test('got from a non-member, for an unknown seq or for a note changes nothing', () => {
@@ -143,14 +158,14 @@ test('rollover by bytes drops until the new event fits', () => {
   assert.equal(store.totalBytes, s.bytes);
 });
 
-test('an image nobody else waits for is checked against its stored preview only', () => {
+test('an image sent while alone counts in full, so it can make older notes roll off', () => {
   const { store, s } = setup({ maxEvents: 100 });
   store.memberUp(s, 'a');
   const big = 'x'.repeat(700); // 780 each
   store.append(s, note(big)); store.append(s, note(big));
   store.append(s, { kind: 'image', client: 'a', iv: IV, ct: 'y'.repeat(1000), piv: IV, pct: 'preview' });
-  assert.deepEqual(s.events.map((e) => e.seq), [1, 2, 3]);
-  assert.equal(s.rolledSeq, 0);
+  assert.deepEqual(s.events.map((e) => e.seq), [2, 3]);
+  assert.equal(s.rolledSeq, 1);
   assert.equal(store.totalBytes, s.bytes);
 });
 
@@ -198,4 +213,24 @@ test('a session of exactly minSessionBytes takes the largest image note, and one
   assert.doesNotThrow(() => store.append(s, largest));
   const small = setup({ ...limits, maxSessionBytes: minSessionBytes(limits) - 1 });
   assert.throws(() => small.store.append(small.s, largest), { code: 'TOO_LARGE' });
+});
+
+test('short of room, held full images shrink to their previews before any note rolls off', () => {
+  const { store, s } = setup({ maxEvents: 100 });
+  store.memberUp(s, 'a'); // alone: every full is held for whoever joins first
+  const full = 'y'.repeat(500); // 603 per image while held, 87 as a preview
+  store.append(s, note('n'.repeat(300)));
+  for (let i = 0; i < 3; i++) store.append(s, { kind: 'image', client: 'a', iv: IV, ct: full, piv: IV, pct: 'preview' });
+  // 383 + 3 × 603 = 2192 > 2000: the oldest image gave up its full; nothing rolled off.
+  assert.deepEqual(s.events.map((e) => e.seq), [1, 2, 3, 4]);
+  assert.equal(s.rolledSeq, 0);
+  assert.deepEqual(s.events.slice(1).map((e) => e.ct !== undefined), [false, true, true]);
+  assert.equal(store.totalBytes, s.bytes);
+  // A released image no longer waits for anyone: a later joiner's receipt changes nothing.
+  store.memberUp(s, 'b');
+  const bytes = s.bytes;
+  store.got(s, 'b', 2);
+  assert.equal(s.bytes, bytes);
+  store.got(s, 'b', 3);
+  assert.equal(s.events[2].ct, undefined);
 });

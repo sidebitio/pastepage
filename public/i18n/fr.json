@@ -1,18 +1,13 @@
 {
-  "start": {
-    "lede": "Échangez du texte en direct par copier-coller. Ce que vous collez arrive tel que vous l'avez collé, fins de ligne comprises.",
-    "privacy": "Les notes sont chiffrées dans votre navigateur avant d'être envoyées : le serveur ne les détient donc que chiffrées, en mémoire, jamais sur disque. Une session est supprimée quand quelqu'un y met fin, quand elle expire ou peu après le départ de tous les participants.",
-    "title": "Nouvelle session",
-    "hint": "Vous obtenez un nom de session et un mot de passe aléatoires à envoyer à l'autre personne.",
-    "hours": "Tout supprimer après",
-    "name": "Votre nom",
-    "namePlaceholder": "Facultatif",
-    "go": "Démarrer une nouvelle session",
-    "busy": "Démarrage…"
+  "draft": {
+    "lede": "Collez ou tapez ci-dessous. Rien ne quitte ce navigateur avant que vous appuyiez sur Envoyer : une session est alors créée, avec un lien à partager.",
+    "join": "Rejoindre plutôt une session",
+    "privacy": "Les notes sont chiffrées dans votre navigateur avant d'être envoyées : le serveur ne les détient donc que chiffrées, en mémoire, jamais sur disque. Une session est supprimée quand quelqu'un y met fin, quand elle expire ou peu après le départ de tous les participants."
   },
   "join": {
+    "button": "Rejoindre",
     "title": "Rejoindre une session",
-    "hint": "Utilisez le nom de session et le mot de passe que vous avez reçus, ou ouvrez le lien.",
+    "hint": "Collez le lien que vous avez reçu, ou saisissez le nom de session et le mot de passe.",
     "id": "Nom de session",
     "idPlaceholder": "12-dancing-apes",
     "pass": "Mot de passe",
@@ -33,6 +28,13 @@
     "newNote": "Nouvelle note de {name}",
     "empty": "Aucune note pour l'instant.",
     "emptyHint": "Collez quelque chose ci-dessous, ou n'importe où sur cette page."
+  },
+  "bar": {
+    "label": "Inviter",
+    "ready": "Session prête. Envoyez ce lien à l'autre personne :",
+    "copy": "Copier le lien",
+    "more": "Plus d'options",
+    "close": "Fermer"
   },
   "usage": {
     "title": "Session remplie à {pct} %"
@@ -68,7 +70,9 @@
     "label": "Tout supprimer dans",
     "set": "Tout sera supprimé dans {time}.",
     "clear": "Effacer toutes les notes",
-    "end": "Terminer la session et la supprimer"
+    "end": "Terminer la session et la supprimer",
+    "after": "Suppression après {time}",
+    "afterTitle": "Choisir quand cette session est supprimée"
   },
   "time": {
     "d": "{d} j",
@@ -91,10 +95,7 @@
   },
   "confirm": {
     "cancel": "Annuler",
-    "clear": {
-      "one": "Effacer la seule note ? Elle disparaît pour tous les participants de cette session.",
-      "other": "Effacer les {count} notes ? Elles disparaissent pour tous les participants de cette session."
-    },
+    "clear": { "one": "Effacer la seule note ? Elle disparaît pour tous les participants de cette session.", "other": "Effacer les {count} notes ? Elles disparaissent pour tous les participants de cette session." },
     "clearYes": "Tout effacer",
     "end": "Terminer cette session ? Toutes les notes sont supprimées du serveur et le lien ne fonctionne plus pour personne.",
     "endYes": "Terminer la session"

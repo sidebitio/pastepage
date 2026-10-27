@@ -1,5 +1,5 @@
-// Header menus (Invite, expiry, Settings) and the theme and language controls, which appear in the
-// Settings menu and in the footer of the start and "session ended" screens.
+// Header menus (Join, Invite, expiry, Settings) and the theme and language controls, which appear in the
+// Settings menu and in the footer of the "session ended" screen.
 import { APP_NAME, storage } from './brand.js';
 import { inviteLink, inviteText } from './invite.js';
 import { LOCALES, currentLocale } from './i18n.js';
@@ -14,12 +14,14 @@ export const WIDTHS = ['normal', 'wide'];
 export const FOLDS = ['fold', 'full'];
 /** UI languages offered in the picker, each by its own name. */
 const LANGUAGE_NAMES = { en: 'English', nl: 'Nederlands', de: 'Deutsch', fr: 'Français', es: 'Español', ja: '日本語' };
-const MENUS = ['invite', 'expiry', 'settings'];
+const MENUS = ['join', 'invite', 'expiry', 'settings'];
 
 const $ = (id) => document.getElementById(id);
 let opts = null;
 let expires = 0;
 let skew = 0;
+/** On the draft page (no session yet): the hours chosen for the session the first Send will make; 0 in a session. */
+let draftHours = 0;
 
 /**
  * Close every header menu.
@@ -34,7 +36,7 @@ export function closeMenus() {
 
 /**
  * Open one header menu (closing the others). The Invite menu is filled in first.
- * @param {'invite'|'expiry'|'settings'} name
+ * @param {'join'|'invite'|'expiry'|'settings'} name
  * @returns {void}
  */
 export function openMenu(name) {
@@ -117,6 +119,13 @@ export function secondsLeft() {
 function updateExpiry() {
   const { t } = opts;
   const btn = $('expiry-btn');
+  btn.dataset.i18nTitle = draftHours ? 'expiry.afterTitle' : 'expiry.title'; // so applyDom keeps the right tooltip
+  btn.title = t(btn.dataset.i18nTitle);
+  if (draftHours) {
+    btn.textContent = t('expiry.after', { time: t('hours.' + draftHours) });
+    btn.classList.remove('soon');
+    return;
+  }
   if (!expires) {
     btn.textContent = t('expiry.button');
     btn.classList.remove('soon');
@@ -136,6 +145,18 @@ function updateExpiry() {
 export function setExpiry(exp, serverNow) {
   expires = Number.isFinite(exp) ? exp : 0;
   if (Number.isFinite(serverNow)) skew = serverNow - Date.now() / 1000;
+  updateExpiry();
+}
+
+/**
+ * Show the draft page's expiry choice on the pill ("Deletes after 24 hours") and hide Clear and End, which need a
+ * session; 0 goes back to showing the session's own expiry.
+ * @param {number} hours one of HOURS, or 0
+ * @returns {void}
+ */
+export function setDraftHours(hours) {
+  draftHours = HOURS.includes(hours) ? hours : 0;
+  $('expiry-danger').hidden = draftHours !== 0;
   updateExpiry();
 }
 
@@ -277,6 +298,8 @@ export function relabelMenus() {
  * @param {(text: string, selectEl?: Element|null) => Promise<boolean>} o.copy copy to the clipboard
  * @param {(msg: string) => void} o.toast show a short message
  * @param {() => {id: string, pass: string, base: string}} o.getInvite the current session's invite parts
+ * @param {() => boolean} o.beforeInvite the Invite button was clicked; false when the app takes care of it (on the
+ *   draft page, it first makes the session)
  * @param {(hours: number) => void} o.onExpire an expiry choice was clicked
  * @param {() => void} o.onClear "Clear all notes" was clicked
  * @param {() => void} o.onEnd "End session" was clicked
@@ -286,7 +309,11 @@ export function relabelMenus() {
 export function initMenus(o) {
   opts = o;
   for (const m of MENUS) {
-    $(m + '-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(m); });
+    $(m + '-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (m === 'invite' && $('invite-menu').hidden && opts.beforeInvite?.() === false) { closeMenus(); return; }
+      toggleMenu(m);
+    });
   }
   document.addEventListener('click', (e) => {
     if (!MENUS.some((m) => $(m + '-menu').contains(e.target))) closeMenus();

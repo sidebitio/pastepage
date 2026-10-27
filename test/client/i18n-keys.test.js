@@ -63,7 +63,7 @@ test('i18n keys: every key-shaped string literal in public/js is in en.json', ()
   // fail('burn.gone'), and so on. A literal counts when its first segment is one of the fixed namespaces below
   // (a fixed list, so a deleted section or a misspelled namespace in en.json is still caught).
   const msgs = en();
-  const top = new Set(['start', 'join', 'gone', 'room', 'invite', 'expiry', 'time', 'hours', 'hoursShort', 'confirm',
+  const top = new Set(['draft', 'bar', 'join', 'gone', 'room', 'invite', 'expiry', 'time', 'hours', 'hoursShort', 'confirm',
     'toast', 'note', 'reply', 'react', 'pin', 'burn', 'size', 'compose', 'image', 'settings', 'credit', 'error', 'usage', 'rolled']);
   const found = [];
   for (const { file, src } of jsSources()) {
@@ -72,7 +72,7 @@ test('i18n keys: every key-shaped string literal in public/js is in en.json', ()
     }
   }
   assert.ok(found.length > 80, `expected many key-shaped literals, found ${found.length}`);
-  for (const k of ['join.busy', 'start.busy', 'note.noWrap', 'room.reconnecting']) {
+  for (const k of ['join.busy', 'expiry.after', 'note.noWrap', 'room.reconnecting']) {
     assert.ok(found.some((f) => f.key === k), `the scan should see ${k}`);
   }
   const bad = found.filter((f) => !isLeaf(msgs, f.key)).map((f) => `${f.file}: ${f.key}`);

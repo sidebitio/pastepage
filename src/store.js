@@ -180,15 +180,25 @@ export class SessionStore extends EventEmitter {
     return released;
   }
 
-  /** A client has stored an image's full version; once all pending clients have, the server forgets the full. */
+  /**
+   * A client has stored an image's full version; once all pending clients have, the server forgets the full. An image
+   * sent while nobody else was in the session waits for the first other member instead.
+   */
   got(session, client, seq) {
     const ev = session.events.find((e) => e.seq === seq);
-    if (!ev || ev.kind !== 'image' || !ev.pending?.delete(client)) return;
-    if (ev.pending.size === 0) { this.#release(session, ev); this.#emitUsage(session); }
+    if (!ev || ev.kind !== 'image') return;
+    if (ev.firstOther) {
+      if (client === ev.client || !session.members.has(client)) return;
+      ev.firstOther = false;
+    } else if (!ev.pending?.delete(client) || ev.pending.size > 0) return;
+    this.#release(session, ev);
+    this.#emitUsage(session);
   }
 
-  /** Delete an image's full ciphertext and free its bytes. */
+  /** Delete an image's full ciphertext and free its bytes; nobody waits for it any more. */
   #release(session, ev) {
+    ev.firstOther = false;
+    ev.pending?.clear();
     if (ev.ct === undefined) return;
     const freed = ev.ct.length + ev.iv.length;
     delete ev.iv;
@@ -214,7 +224,9 @@ export class SessionStore extends EventEmitter {
 
   /**
    * Append an encrypted event. When the session is full, the oldest events are dropped to make room (rolledSeq records the last one).
-   * An image keeps its full ciphertext until every other member has confirmed it with got().
+   * An image keeps its full ciphertext until every other member has confirmed it with got(). Sent while nobody else is
+   * in the session (someone pasting before sharing the link), it keeps it until the first member who joins has it.
+   * When the session is short of room, held full images are given up first (oldest first), before any event rolls off.
    * @param {object} session
    * @param {{kind: 'note'|'burn'|'meta'|'image', client: string, iv: string, ct: string, piv?: string, pct?: string}} ev
    * @returns {object} the wire event
@@ -228,18 +240,20 @@ export class SessionStore extends EventEmitter {
     if (bytes > maxSessionBytes) throw new AppError('TOO_LARGE');
     const pending = new Set(kind === 'image' ? session.members.keys() : []);
     pending.delete(client);
-    const stored = kind === 'image' && pending.size === 0 ? eventBytes({ piv, pct }) : bytes;
-    while (session.events.length && (session.events.length >= maxEvents || session.bytes + stored > maxSessionBytes)) {
+    // Short of room, full images still held for someone go first, oldest first: they keep their preview, and the
+    // notes stay. Only then do the oldest events roll off.
+    for (const ev of session.events) {
+      if (session.bytes + bytes <= maxSessionBytes) break;
+      if (ev.kind === 'image' && ev.ct !== undefined) this.#release(session, ev);
+    }
+    while (session.events.length && (session.events.length >= maxEvents || session.bytes + bytes > maxSessionBytes)) {
       const old = session.events.shift();
       session.bytes -= old.bytes;
       this.#totalBytes -= old.bytes;
       session.rolledSeq = old.seq;
     }
-    if (this.#totalBytes + stored > maxTotalBytes) throw new AppError('SERVER_FULL');
-    if (kind === 'image') {
-      if (pending.size === 0) return this.#push(session, { kind, client, piv, pct, pending }, stored);
-      return this.#push(session, { kind, client, iv, ct, piv, pct, pending }, bytes);
-    }
+    if (this.#totalBytes + bytes > maxTotalBytes) throw new AppError('SERVER_FULL');
+    if (kind === 'image') return this.#push(session, { kind, client, iv, ct, piv, pct, pending, firstOther: pending.size === 0 }, bytes);
     const fields = kind === 'burn' ? { kind, client, iv, ct, size: ct.length } : { kind, client, iv, ct };
     return this.#push(session, fields, bytes);
   }

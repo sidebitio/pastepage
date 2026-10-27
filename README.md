@@ -11,7 +11,7 @@ PastePage is a small self-hosted web app: you run it on your own server, next to
 - **Exactly what you pasted.** No trimmed spaces, smart quotes or reformatting, and Windows line endings stay as they are. If you type the text, paste into text already in the box, or change a paste before sending it, line breaks are sent as plain LF. Syntax highlighting, line numbers, Wrap and Copy on every note.
 - **Live.** New notes, reactions, pins and "2 here" update instantly for everyone in the session.
 - **One link to join.** Send the invite link, or send the session name and password separately if you want to be extra careful.
-- **Images too.** Paste a screenshot or drop image files (PNG, JPEG, WebP or GIF) and they are sent as notes, encrypted like text, with any text in the box as the caption. A large image is made smaller in your browser before it is sent: first without losing anything, then as high-quality WebP, then at a smaller size if needed. Hidden data such as a photo's GPS location is removed before sending. Each card has Copy, Download and a full-size view. The full image is kept in each person's browser, encrypted; the server holds it only until everyone who was there has it, and then keeps a small preview for people who join later.
+- **Images too.** Paste a screenshot or drop image files (PNG, JPEG, WebP or GIF) and they are sent as notes, encrypted like text, with any text in the box as the caption. A large image is made smaller in your browser before it is sent: first without losing anything, then as high-quality WebP, then at a smaller size if needed. Hidden data such as a photo's GPS location is removed before sending. Each card has Copy, Download and a full-size view. The full image is kept in each person's browser, encrypted; the server holds it only until everyone who was there has it (or, if you were alone, until the first person who joins has it), and then keeps a small preview for people who join later.
 - **Replies, reactions and pins.** Reply to a note, react with 👍 ❤️ 😂 🎉 👀 ✅, pin the notes that matter.
 - **Burn after reading.** A note that the first other person can open once, after which it is deleted for everyone.
 - **Sessions don't fill up.** When a session reaches its size limit, the oldest notes make room for new ones, and a thin line under the header shows how full it is.
@@ -43,7 +43,7 @@ Try it on your own computer first:
 npx pastepage
 ```
 
-npx asks before it downloads the package. Then open the address it prints, <http://127.0.0.1:3000/>, in two browser windows: start a session in one, open the invite link in the other.
+npx asks before it downloads the package. Then open the address it prints, <http://127.0.0.1:3000/>, in two browser windows: paste something in one and press Send, then open the link it shows in the other.
 
 To keep it installed, pick one of these:
 
@@ -139,7 +139,7 @@ Settings are environment variables. Every one has a safe default, so you only se
 | `MAX_HOURS` | `168` | The longest a session can be set to last, in hours (default 168, which is 7 days). If it is lower than an option in the page's expiry menu, the longer choices are capped to it. |
 | `MAX_NOTE_BYTES` | `1500000` | Largest single note, measured after encryption. That fits about 1.1 MB of plain text, less if the text has many line breaks, tabs, quotes or backslashes. Browsers make images fit this default (at most 800 KB of image per note); with a lower value, larger images are refused as too large. |
 | `MAX_PREVIEW_BYTES` | `96000` | Largest encrypted preview of an image. An image whose preview is larger is sent as an ordinary note and kept in full on the server. |
-| `MAX_SESSION_BYTES` | `12000000` | Most encrypted data one session can hold. Past this, the oldest events are dropped to make room. Must be at least `MAX_NOTE_BYTES` + `MAX_PREVIEW_BYTES` + 96, the room one image note can take; the server won't start otherwise. |
+| `MAX_SESSION_BYTES` | `12000000` | Most encrypted data one session can hold. Past this, full images still held for someone shrink to their previews first, then the oldest events are dropped to make room. Must be at least `MAX_NOTE_BYTES` + `MAX_PREVIEW_BYTES` + 96, the room one image note can take; the server won't start otherwise. |
 | `MAX_EVENTS` | `2000` | Most events one session can hold (notes, reactions, pins, deletions and so on). Past this, the oldest events are dropped to make room. |
 | `MAX_SESSIONS` | `1000` | Most sessions on the server at once. |
 | `MAX_TOTAL_BYTES` | `268435456` | Most encrypted data across all sessions together (256 MiB). |

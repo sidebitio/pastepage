@@ -787,8 +787,8 @@ test('the welcome budget counts previews before any welcome is built', async (t)
   const { url, app } = await server({ maxSessionBytes: 30_000_000, maxTotalBytes: 1e9, maxPreviewBytes: 1_500_000, maxWelcomeBytesInFlight: 1 });
   const id = await createSession(url);
   const pct = randomBytes(1_120_000).toString('base64url');
-  for (let i = 0; i < 19; i++) assert.equal((await addImage(url, id, 'creator-0', { pct })).status, 200); // previews only: nobody else is in
-  assert.equal(app.store.get(id).events[0].ct, undefined);
+  for (let i = 0; i < 19; i++) assert.equal((await addImage(url, id, 'creator-0', { pct })).status, 200); // big previews, tiny fulls
+  assert.equal(app.store.get(id).events[0].ct, 'full'); // held until the first other member has it
   const slow = wsFrom(url, { 'x-forwarded-for': '203.0.113.104' });
   assert.equal(await slow.opened, true);
   slow.ws.pause();

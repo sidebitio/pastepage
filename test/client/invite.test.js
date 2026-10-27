@@ -1,7 +1,7 @@
 // Tests for public/js/invite.js: hash parsing, invite links and text.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseHash, inviteLink, inviteText } from '../../public/js/invite.js';
+import { parseHash, parseJoinInput, inviteLink, inviteText } from '../../public/js/invite.js';
 
 test('invite: parseHash', () => {
   const ok = { id: '12-dancing-apes', pass: 'tq7m8kxph3vdr2' };
@@ -35,4 +35,16 @@ test('invite: links and text', () => {
   const fakeT = (k, v) => { seen = [k, v]; return 'x'; };
   assert.equal(inviteText(fakeT, { base: 'https://h/p/', id: '12-dancing-apes', pass: 'abc' }), 'x');
   assert.deepEqual(seen, ['invite.text', { link: 'https://h/p/#12-dancing-apes/abc', base: 'https://h/p/', id: '12-dancing-apes', pass: 'abc' }]);
+});
+
+test('invite: the Join field takes a whole link, a hash, id/password or a session name', () => {
+  const both = { id: '12-dancing-apes', pass: 'tq7m8kxph3vdr2' };
+  assert.deepEqual(parseJoinInput('https://paste.example.com/pp/#12-dancing-apes/tq7m8kxph3vdr2'), both);
+  assert.deepEqual(parseJoinInput('  http://127.0.0.1:3000/#12-dancing-apes/tq7m8kxph3vdr2.  '), both);
+  assert.deepEqual(parseJoinInput('#12-dancing-apes/tq7m8kxph3vdr2'), both);
+  assert.deepEqual(parseJoinInput('12-dancing-apes/tq7m8kxph3vdr2'), both);
+  assert.deepEqual(parseJoinInput('https://paste.example.com/#12-dancing-apes'), { id: '12-dancing-apes', pass: '' });
+  assert.deepEqual(parseJoinInput('12-Dancing-Apes'), { id: '12-dancing-apes', pass: '' });
+  assert.equal(parseJoinInput('https://paste.example.com/'), null);
+  assert.equal(parseJoinInput(''), null);
 });

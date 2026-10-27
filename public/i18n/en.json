@@ -1,18 +1,13 @@
 {
-  "start": {
-    "lede": "Paste text back and forth, live. What you paste arrives as you pasted it, line endings included.",
-    "privacy": "Notes are encrypted in your browser before they are sent, so the server only ever holds them encrypted, in memory, never on disk. A session is deleted when someone ends it, when it expires, or shortly after everyone has left.",
-    "title": "New session",
-    "hint": "You get a random session name and password to send to the other person.",
-    "hours": "Delete everything after",
-    "name": "Your name",
-    "namePlaceholder": "Optional",
-    "go": "Start new session",
-    "busy": "Starting…"
+  "draft": {
+    "lede": "Paste or type below. Nothing leaves this browser until you press Send: then a session is made, with a link to share.",
+    "join": "Join a session instead",
+    "privacy": "Notes are encrypted in your browser before they are sent, so the server only ever holds them encrypted, in memory, never on disk. A session is deleted when someone ends it, when it expires, or shortly after everyone has left."
   },
   "join": {
+    "button": "Join",
     "title": "Join a session",
-    "hint": "Use the session name and password you were sent, or open the link.",
+    "hint": "Paste the link you were sent, or enter the session name and password.",
     "id": "Session name",
     "idPlaceholder": "12-dancing-apes",
     "pass": "Password",
@@ -33,6 +28,13 @@
     "newNote": "New note from {name}",
     "empty": "No notes yet.",
     "emptyHint": "Paste something below, or paste anywhere on this page."
+  },
+  "bar": {
+    "label": "Invite",
+    "ready": "Session ready. Send this link to the other person:",
+    "copy": "Copy link",
+    "more": "More options",
+    "close": "Close"
   },
   "usage": {
     "title": "Session {pct}% full"
@@ -68,7 +70,9 @@
     "label": "Delete everything in",
     "set": "Everything will be deleted in {time}.",
     "clear": "Clear all notes",
-    "end": "End session and delete it"
+    "end": "End session and delete it",
+    "after": "Deletes after {time}",
+    "afterTitle": "Choose when this session is deleted"
   },
   "time": {
     "d": "{d}d",
@@ -91,10 +95,7 @@
   },
   "confirm": {
     "cancel": "Cancel",
-    "clear": {
-      "one": "Clear the only note? It disappears for everyone in this session.",
-      "other": "Clear all {count} notes? They disappear for everyone in this session."
-    },
+    "clear": { "one": "Clear the only note? It disappears for everyone in this session.", "other": "Clear all {count} notes? They disappear for everyone in this session." },
     "clearYes": "Clear all",
     "end": "End this session? All notes are deleted from the server and the link stops working for everyone.",
     "endYes": "End session"

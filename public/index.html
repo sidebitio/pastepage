@@ -1,5 +1,6 @@
 <!doctype html>
-<!-- Single page for the whole app: start screen, ended-session screen and the room. Scripts and styles are
+<!-- Single page for the whole app: the room (also the draft page you land on before a session exists) and the
+     ended-session screen. Scripts and styles are
      external files only (no inline code), and all visible text comes from data-i18n attributes. -->
 <html lang="en">
 <head>
@@ -15,47 +16,6 @@
 <script src="js/app.js" type="module"></script>
 </head>
 <body>
-
-<main id="view-start" class="screen" hidden>
-  <div class="wrap">
-    <p class="brand">Paste<span>Page</span></p>
-    <p class="lede" data-i18n="start.lede"></p>
-    <div class="cards">
-      <form id="start-form" class="card form" autocomplete="off">
-        <h2 data-i18n="start.title"></h2>
-        <p class="hint" data-i18n="start.hint"></p>
-        <label for="start-hours" data-i18n="start.hours"></label>
-        <select id="start-hours"></select>
-        <label for="start-name" data-i18n="start.name"></label>
-        <input id="start-name" type="text" maxlength="40" data-i18n-placeholder="start.namePlaceholder">
-        <button class="primary" type="submit" id="start-go" data-i18n="start.go"></button>
-        <p class="error" id="start-err" role="alert" hidden></p>
-      </form>
-      <form id="join-form" class="card form" autocomplete="off">
-        <h2 data-i18n="join.title"></h2>
-        <p class="hint" data-i18n="join.hint"></p>
-        <label for="join-id" data-i18n="join.id"></label>
-        <input id="join-id" type="text" required spellcheck="false" autocapitalize="off" autocorrect="off" data-i18n-placeholder="join.idPlaceholder">
-        <label for="join-pass" data-i18n="join.pass"></label>
-        <input id="join-pass" type="text" required spellcheck="false" autocapitalize="off" autocorrect="off">
-        <label for="join-name" data-i18n="start.name"></label>
-        <input id="join-name" type="text" maxlength="40" data-i18n-placeholder="start.namePlaceholder">
-        <button class="primary" type="submit" id="join-go" data-i18n="join.go"></button>
-        <p class="error" id="join-err" role="alert" hidden></p>
-      </form>
-    </div>
-    <p class="hint foot" data-i18n="start.privacy"></p>
-    <footer class="site-foot">
-      <div class="theme-switch" role="group" data-i18n-aria="settings.theme">
-        <button type="button" data-theme-choice="system" data-i18n="settings.system"></button>
-        <button type="button" data-theme-choice="light" data-i18n="settings.light"></button>
-        <button type="button" data-theme-choice="dark" data-i18n="settings.dark"></button>
-      </div>
-      <select class="lang-select" data-i18n-aria="settings.language"></select>
-      <a class="credit" href="https://sidebit.io" target="_blank" rel="noopener" data-i18n="credit"></a>
-    </footer>
-  </div>
-</main>
 
 <main id="view-gone" class="screen" hidden>
   <div class="wrap narrow">
@@ -81,6 +41,19 @@
       <p class="brand small">Paste<span>Page</span></p>
       <span class="pill live" id="present" data-i18n-title="room.hereTitle"></span>
       <div class="spacer"></div>
+      <div class="menu-wrap" id="join-wrap" hidden>
+        <button type="button" class="ghost" id="join-btn" aria-haspopup="true" aria-expanded="false" aria-controls="join-menu" data-i18n="join.button"></button>
+        <form class="menu join" id="join-menu" autocomplete="off" hidden>
+          <p class="menu-label" data-i18n="join.title"></p>
+          <p class="hint" data-i18n="join.hint"></p>
+          <label for="join-id" data-i18n="join.id"></label>
+          <input id="join-id" type="text" required spellcheck="false" autocapitalize="off" autocorrect="off" data-i18n-placeholder="join.idPlaceholder">
+          <label for="join-pass" data-i18n="join.pass"></label>
+          <input id="join-pass" type="text" required spellcheck="false" autocapitalize="off" autocorrect="off">
+          <button class="primary block" type="submit" id="join-go" data-i18n="join.go"></button>
+          <p class="error" id="join-err" role="alert" hidden></p>
+        </form>
+      </div>
       <div class="menu-wrap">
         <button type="button" class="ghost" id="invite-btn" aria-haspopup="true" aria-expanded="false" aria-controls="invite-menu" data-i18n="invite.button"></button>
         <div class="menu invite" id="invite-menu" hidden>
@@ -98,9 +71,11 @@
         <div class="menu" id="expiry-menu" hidden>
           <p class="menu-label" data-i18n="expiry.label"></p>
           <div class="menu-opts" id="expiry-opts"></div>
-          <hr>
-          <button type="button" class="danger-text" id="clear-btn" data-i18n="expiry.clear"></button>
-          <button type="button" class="danger-text" id="end-btn" data-i18n="expiry.end"></button>
+          <div id="expiry-danger">
+            <hr>
+            <button type="button" class="danger-text" id="clear-btn" data-i18n="expiry.clear"></button>
+            <button type="button" class="danger-text" id="end-btn" data-i18n="expiry.end"></button>
+          </div>
         </div>
       </div>
       <div class="menu-wrap">
@@ -134,6 +109,15 @@
     <div class="usage" id="usage" aria-hidden="true" hidden><span></span></div>
   </header>
 
+  <div class="wrap invite-bar-wrap" id="invite-bar" hidden>
+    <div class="invite-bar" role="region" data-i18n-aria="bar.label">
+      <p data-i18n="bar.ready"></p>
+      <code id="bar-link"></code>
+      <button type="button" class="bar-copy" id="bar-copy" data-i18n="bar.copy"></button>
+      <button type="button" class="bar-more" id="bar-more" data-i18n="bar.more"></button>
+      <button type="button" class="notice-close" id="bar-close" data-i18n-aria="bar.close" data-i18n-title="bar.close">&times;</button>
+    </div>
+  </div>
   <section class="pinned wrap" id="pinned" aria-labelledby="pinned-title" hidden>
     <div class="pinned-head">
       <h2 class="pinned-title" id="pinned-title"></h2>
@@ -144,7 +128,13 @@
   <main class="feed wrap" id="feed"></main>
   <div class="sr-only" id="announce" role="status" aria-live="polite"></div>
   <div class="empty wrap" id="empty" hidden>
-    <p><strong data-i18n="room.empty"></strong> <span data-i18n="room.emptyHint"></span></p>
+    <p id="room-empty"><strong data-i18n="room.empty"></strong> <span data-i18n="room.emptyHint"></span></p>
+    <div class="draft-empty" id="draft-empty" hidden>
+      <p class="draft-lede" data-i18n="draft.lede"></p>
+      <p><button type="button" class="link" id="draft-join" data-i18n="draft.join"></button></p>
+      <p class="error" id="draft-err" role="alert" hidden></p>
+      <p class="hint" data-i18n="draft.privacy"></p>
+    </div>
   </div>
 
   <footer class="composer">

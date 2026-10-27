@@ -1,9 +1,10 @@
-// Entry point: routing by the URL hash, starting and joining sessions, the room lifecycle (live connection,
-// ordered event pipeline, rendering) and the wiring between the feed, the composer and the menus.
+// Entry point: routing by the URL hash, the draft page (where a visit lands; its first Send or Invite makes the
+// session), joining sessions, the room lifecycle (live connection, ordered event pipeline, rendering) and the wiring
+// between the feed, the composer and the menus.
 import { APP_NAME, SITE_URL, storage } from './brand.js';
 import { b64u, decryptJSON, deriveBits, encryptJSON, hex, keysFromBits, unhex } from './crypto.js';
 import { ID_RE, newPassword, newSessionId, normId, normPass } from './words.js';
-import { parseHash } from './invite.js';
+import { inviteLink, parseHash, parseJoinInput } from './invite.js';
 import { applyDom, currentLocale, loadLocale, pickLocale, t } from './i18n.js';
 import { applyEvent, createState, keepRolled, noteList, removeNote, replyInfo, setRolled } from './state.js';
 import { createPipeline } from './pipeline.js';
@@ -14,10 +15,10 @@ import { validImage } from './image.js';
 import { closeViewer, copyImage, downloadImage } from './imageui.js';
 import * as local from './localstore.js';
 import {
-  clearComposer, getName, getReplyTarget, initComposer, relabelComposer, resetComposer, saveName, setReplyTarget, typedName,
+  clearComposer, getReplyTarget, initComposer, relabelComposer, resetComposer, setReplyTarget, typedName,
 } from './composer.js';
 import {
-  HOURS, closeMenus, describeExpiry, initMenus, openMenu, relabelMenus, secondsLeft, setExpiry,
+  HOURS, closeMenus, describeExpiry, initMenus, openMenu, relabelMenus, secondsLeft, setDraftHours, setExpiry,
 } from './menus.js';
 
 const $ = (id) => document.getElementById(id);
@@ -50,6 +51,17 @@ let room = null;
 /** Bumped on every navigation, so an async start/join that was overtaken stops. */
 let navSeq = 0;
 let unseen = 0;
+/**
+ * True on the draft page: the room page shown before any session exists (where a visit lands). Its first Send, or
+ * Invite, makes the session; until then nothing leaves the browser.
+ */
+let draftMode = false;
+/** The expiry chosen on the draft page for the session it will make, in hours. */
+let draftHours = 24;
+/** The session being made from the draft page, so a Send of several images or a second click waits for the same one. */
+let creating = null;
+/** Set while a join's key is being derived (before its room exists): Send and Invite must not make a session then. */
+let joinPending = null;
 
 let storeOpening = null;
 /**
@@ -161,7 +173,7 @@ function announce(msg) {
   announceTimer = setTimeout(() => { el.textContent = msg; }, 60);
 }
 
-/** The error lines under the start and join forms: element id -> function giving the message in the current language. */
+/** The error lines of the Join panel and the draft page: element id -> function giving the message in the current language. */
 const formErrors = new Map();
 
 /** Show an error line (msg: a function returning the text, so it follows a language change) or hide it (msg falsy). */
@@ -187,7 +199,7 @@ function show(view) {
   closeMenus();
   if (!$('confirm').hidden) $('confirm-no').click(); // a dialog must not stay up over another screen
   if (view !== 'room') { $('toast').hidden = true; $('notice').hidden = true; } // room messages don't belong on the other screens
-  for (const v of ['start', 'gone', 'room']) $('view-' + v).hidden = v !== view;
+  for (const v of ['gone', 'room']) $('view-' + v).hidden = v !== view;
 }
 
 /* ---------- stored keys ---------- */
@@ -203,28 +215,47 @@ function forget(id) {
   storage.del('sessionStorage', 'rolled:' + id);
 }
 
+/** True for a room this page may act in: one it made or reconnected to, or a join the server has welcomed. */
+const ready = (r) => Boolean(r) && (r.welcomed || !r.joining);
+
 /** The page URL without hash, with the hash set to just the session id (no password). */
 const urlFor = (id) => location.pathname + location.search + (id ? '#' + id : '');
 
 /* ---------- views ---------- */
 
-function showStart({ id = '', pass = '', errCode = '' } = {}) {
-  leaveRoom();
-  const name = getName();
-  $('start-name').value = name;
-  $('join-name').value = name;
+/**
+ * The draft page: the room page with no session yet, the cursor in the message box. With an id (a link without a
+ * stored key, or a join to retry), the Join panel opens filled in. Staying on the draft page keeps what is typed.
+ */
+function showDraft({ id = '', pass = '', errCode = '', openJoin = false } = {}) {
+  const staying = draftMode;
+  leaveRoom(staying);
+  show('room');
+  applyDraft(true);
+  if (!staying) resetComposer();
+  renderUsage();
+  $('empty').hidden = false;
   $('join-id').value = id;
   $('join-pass').value = pass;
-  setError('start-err', null);
   setError('join-err', errCode ? () => errText(errCode) : null);
   setBusy('join-go', false, 'join.go', 'join.busy');
-  if (INSECURE) {
-    setError('start-err', () => errText('INSECURE'));
-    $('start-go').disabled = true;
-    $('join-go').disabled = true;
+  setError('draft-err', INSECURE ? () => errText('INSECURE') : null);
+  if (id || openJoin) {
+    openMenu('join');
+    $(!id ? 'join-id' : pass ? 'join-go' : 'join-pass').focus();
+  } else {
+    $('compose-text').focus();
   }
-  show('start');
-  if (id) $(pass ? 'join-go' : 'join-pass').focus();
+}
+
+/** Switch the room page between the draft page and a session: Join, the empty-page text, the expiry pill, presence. */
+function applyDraft(on) {
+  draftMode = on;
+  $('join-wrap').hidden = !on;
+  $('draft-empty').hidden = !on;
+  $('room-empty').hidden = on;
+  setDraftHours(on ? draftHours : 0);
+  renderPresence();
 }
 
 function showGone(r) {
@@ -242,15 +273,15 @@ function goHome() {
   route();
 }
 
-/** From a room that is still on, to the start view to create a new one. Its key stays stored, so Back returns to it. */
+/** From a room that is still on, to the draft page for a new one. Its key stays stored, so Back returns to it. */
 function startNew() {
   history.pushState(null, '', urlFor(''));
   route();
-  if (!$('start-go').disabled) $('start-go').focus();
 }
 
 function renderPresence() {
   const el = $('present');
+  el.hidden = draftMode;
   if (!room) return;
   const online = room.status === 'online';
   el.classList.toggle('off', !online);
@@ -259,10 +290,12 @@ function renderPresence() {
     : t(room.welcomed ? 'room.reconnecting' : 'room.connecting');
 }
 
-function enterRoomView() {
+/** Show the room. keepComposer: the draft page carried on into this session, so its box stays exactly as it was. */
+function enterRoomView(keepComposer = false) {
   show('room');
+  applyDraft(false);
   $('join-pass').value = ''; // don't keep the password in the hidden join form
-  resetComposer();
+  if (!keepComposer) resetComposer();
   renderPresence();
   renderUsage();
 }
@@ -383,11 +416,16 @@ async function imagePayload(r, ev) {
   return decryptJSON(r.key, { iv: ev.piv, ct: ev.pct }).catch(() => null);
 }
 
-/** Leave the current room: stop its connection and clear the feed. Safe to call when not in a room. */
-function leaveRoom() {
-  clearComposer(); // unsent text, images, a reply or burn choice never crosses into another session
+/**
+ * Leave the current room: stop its connection and clear the feed. Safe to call when not in a room. Unsent text,
+ * images, a reply or burn choice never cross into another session; only keepComposer (going from the draft page to
+ * its own new session, or joining from it) leaves them in the box.
+ */
+function leaveRoom(keepComposer = false) {
+  if (!keepComposer) clearComposer();
   closeViewer();
   $('notice').hidden = true;
+  $('invite-bar').hidden = true;
   if (!room) return;
   room.live?.close();
   room = null;
@@ -424,7 +462,11 @@ async function openRoom(id, bits, pass, { joining = false, created = null } = {}
   const nav = navSeq;
   const { key, auth } = await keysFromBits(bits);
   if (nav !== navSeq) return; // a newer navigation took over while the key was imported
-  leaveRoom();
+  // From the draft page to the session it made, what is typed stays: it is what is being sent. A join from the draft
+  // page keeps it only until the join succeeds (a failed join leaves the draft as it was); once in the joined
+  // session, the box is empty. Anything else (Back to an older room, say) starts with an empty box.
+  const keep = draftMode && (created !== null || joining);
+  leaveRoom(keep);
   const state = createState(client);
   let haveLocal;
   const r = {
@@ -475,7 +517,7 @@ async function openRoom(id, bits, pass, { joining = false, created = null } = {}
     onApplied: () => { if (alive()) render(r); },
   });
   r.pipeline = pipeline;
-  if (!joining) enterRoomView();
+  if (!joining) enterRoomView(keep);
   if (created) {
     setExpiry(created.expires, created.now);
     noteExpiry(r, created.expires);
@@ -490,6 +532,7 @@ async function openRoom(id, bits, pass, { joining = false, created = null } = {}
         if (location.hash !== '#' + id) history.replaceState(null, '', urlFor(id)); // the password leaves the address bar
         if (joining) {
           setError('join-err', null); // a "busy" line from an earlier attempt
+          clearComposer(); // the draft's text was not meant for this session: it starts with an empty box
           enterRoomView();
         }
       }
@@ -532,7 +575,7 @@ async function openRoom(id, bits, pass, { joining = false, created = null } = {}
       if (!alive()) return;
       if (joining && !r.welcomed) return joinFailed(code, id);
       if (code === 'NOT_FOUND') return showGone(r);
-      showStart({ id, pass: storage.get('sessionStorage', 'pass:' + id) || '', errCode: code });
+      showDraft({ id, pass: storage.get('sessionStorage', 'pass:' + id) || '', errCode: code });
     },
     onStatus: (status) => {
       if (!alive()) return;
@@ -551,12 +594,13 @@ async function openRoom(id, bits, pass, { joining = false, created = null } = {}
   });
 }
 
-/** A join attempt failed before the welcome: back to the join form with the reason. */
+/** A join attempt failed before the welcome: back to the Join panel with the reason; the draft's text stays. */
 function joinFailed(code, id) {
-  leaveRoom();
+  leaveRoom(true);
   stripPass(id);
   setBusy('join-go', false, 'join.go', 'join.busy');
   setError('join-err', () => errText(code));
+  openMenu('join');
 }
 
 /** If the address bar holds "#id/pass", keep only "#id": a reload must not retry, and the password must not stay in history. */
@@ -572,6 +616,8 @@ async function join(rawId, rawPass) {
   const nav = ++navSeq;
   setError('join-err', null);
   setBusy('join-go', true, 'join.go', 'join.busy');
+  const pending = {};
+  joinPending = pending;
   try {
     const bits = await deriveBits(pass, id);
     if (nav !== navSeq) return;
@@ -580,17 +626,20 @@ async function join(rawId, rawPass) {
     console.error(err);
     if (nav !== navSeq) return;
     joinFailed(INSECURE ? 'INSECURE' : 'INTERNAL', id);
+  } finally {
+    // By now the room exists (and is refused until welcomed), the join failed, or another navigation took over.
+    if (joinPending === pending) joinPending = null;
   }
 }
 
-/** Start a new session with a random name and password; retries a taken name a few times. */
-async function create() {
+/**
+ * Make a session for the draft page, with a random name and password (a taken name is retried a few times), and open
+ * it, keeping what is in the message box. Resolves the new room, or null after saying why it failed.
+ */
+async function createSession() {
   const nav = ++navSeq;
-  setError('start-err', null);
-  setBusy('start-go', true, 'start.go', 'start.busy');
-  const name = saveName($('start-name').value);
-  $('start-name').value = name;
-  const hours = Number($('start-hours').value) || 24;
+  setError('draft-err', null);
+  const hours = draftHours;
   const pass = newPassword();
   let id;
   let bits;
@@ -607,20 +656,43 @@ async function create() {
   } catch (err) {
     console.error(err);
     failed = INSECURE ? 'INSECURE' : 'INTERNAL';
-  } finally {
-    setBusy('start-go', false, 'start.go', 'start.busy');
   }
-  if (nav !== navSeq) return;
-  if (failed) { setError('start-err', () => errText(failed)); return; }
-  if (res.status !== 200) {
-    const code = res.data?.error;
-    setError('start-err', () => errText(code));
-    return;
+  if (nav !== navSeq || !draftMode) return null;
+  if (!failed && res.status !== 200) failed = res.data?.error;
+  if (failed) {
+    setError('draft-err', () => errText(failed));
+    toast(errText(failed));
+    return null;
   }
   remember(id, bits, pass);
-  history.pushState(null, '', urlFor(id));
+  history.replaceState(null, '', urlFor(id)); // Back from here goes where the draft page came from, not to an empty draft
   await openRoom(id, bits, pass, { created: res.data });
-  if (room?.id === id) openMenu('invite');
+  return room?.id === id ? room : null;
+}
+
+/**
+ * The room to send to: the current one, or on the draft page a new session (made once, however many notes wait for
+ * it). Null while a join is still being checked, or when making the session failed (it said why).
+ */
+function ensureRoom() {
+  if (ready(room)) return Promise.resolve(room);
+  if (room || joinPending) { toast(t('join.busy')); return Promise.resolve(null); }
+  if (!draftMode) return Promise.resolve(null);
+  creating ??= createSession().finally(() => { creating = null; });
+  return creating;
+}
+
+/** The invite link of the current room, with the password when this tab has it. */
+function roomLink() {
+  const pass = room.pass || storage.get('sessionStorage', 'pass:' + room.id) || '';
+  return inviteLink(location.origin + location.pathname, room.id, pass);
+}
+
+/** After the first Send made the session: the link to share, in a bar above the notes that never takes the focus. */
+function showInviteBar() {
+  if (!room) return;
+  $('bar-link').textContent = roomLink(); // textContent: never parsed as HTML
+  $('invite-bar').hidden = false;
 }
 
 /* ---------- actions inside the room ---------- */
@@ -879,39 +951,43 @@ const ctx = {
   sendMeta: async (payload) => { await sendEncrypted('meta', payload); },
   /**
    * Encrypt a note payload and post it as kind 'note' (or 'burn'; with a preview payload, 'image'); resolves true on
-   * success.
+   * success. On the draft page, the first one makes the session and then shows its invite bar.
    */
-  sendNote: async (payload, { burn: isBurn = false, preview = null } = {}) => (
-    isBurn ? sendBurn(payload) : (await sendEncrypted('note', payload, preview)) !== null),
+  sendNote: async (payload, { burn: isBurn = false, preview = null } = {}) => {
+    const fresh = !room;
+    if (!(await ensureRoom())) return false;
+    if (fresh) showInviteBar();
+    return isBurn ? sendBurn(payload) : (await sendEncrypted('note', payload, preview)) !== null;
+  },
 };
 
 /* ---------- routing ---------- */
 
 /**
- * Route by the hash: "#id/pass" joins, "#id" with a stored key reconnects, "#id" without one shows
- * the join form, anything else shows the start screen.
+ * Route by the hash: "#id/pass" joins, "#id" with a stored key reconnects, "#id" without one opens the Join panel
+ * on the draft page, anything else shows the draft page.
  */
 function route() {
   const nav = ++navSeq;
   const h = parseHash(location.hash);
-  if (!h || INSECURE) { showStart(h ? { id: h.id } : {}); return; }
+  if (!h || INSECURE) { showDraft(h ? { id: h.id } : {}); return; }
   if (room && room.id === h.id && (room.welcomed || !room.joining)) {
     if (h.pass) history.replaceState(null, '', urlFor(h.id)); // already in this room
     return;
   }
   if (h.pass) {
-    showStart({ id: h.id, pass: h.pass });
+    showDraft({ id: h.id, pass: h.pass });
     join(h.id, h.pass);
     return;
   }
   const saved = storage.get('sessionStorage', 'key:' + h.id);
   if (saved && KEY_RE.test(saved)) {
     openRoom(h.id, unhex(saved), storage.get('sessionStorage', 'pass:' + h.id) || '').catch((err) => {
-      if (nav === navSeq) { console.error(err); showStart({ id: h.id }); }
+      if (nav === navSeq) { console.error(err); showDraft({ id: h.id }); }
     });
     return;
   }
-  showStart({ id: h.id });
+  showDraft({ id: h.id });
 }
 
 /* ---------- UI language ---------- */
@@ -943,24 +1019,12 @@ function relocalize() {
 
 /* ---------- startup ---------- */
 
-function buildStartHours() {
-  const sel = $('start-hours');
-  for (const h of HOURS) {
-    const o = document.createElement('option');
-    o.value = String(h);
-    o.dataset.i18n = 'hours.' + h;
-    sel.append(o);
-  }
-  sel.value = '24';
-}
-
 async function boot() {
   // Images saved on this computer for sessions that have expired meanwhile go first.
   localStore().then((store) => local.sweep(store, Date.now() / 1000)).catch((err) => console.error(err));
   // The saved choice, else the browser's languages, else English. A locale that fails to load on a cold start leaves English (loaded alongside it).
   try { await loadLocale(pickLocale(storage.get('localStorage', 'locale'), navigator.languages)); } catch (err) { console.error(err); }
   document.documentElement.lang = currentLocale();
-  buildStartHours();
   applyDom(document);
   initMenus({
     t,
@@ -971,7 +1035,19 @@ async function boot() {
       pass: room ? room.pass || storage.get('sessionStorage', 'pass:' + room.id) || '' : '',
       base: location.origin + location.pathname,
     }),
-    onExpire: changeExpiry,
+    beforeInvite: () => {
+      if (ready(room)) return true;
+      if (draftMode) ensureRoom().then((r) => { if (r && room === r) openMenu('invite'); });
+      return false;
+    },
+    onExpire: (hours) => {
+      if (ready(room)) { changeExpiry(hours); return; }
+      if (room || joinPending) { toast(t('join.busy')); return; } // a join the server hasn't accepted yet
+      draftHours = hours;
+      setDraftHours(hours);
+      // The session may be on its way with the hours chosen before: then it gets these once it exists.
+      creating?.then((r) => { if (r && room === r) changeExpiry(hours); });
+    },
     onClear: clearAll,
     onEnd: endSession,
     onLocale: changeLocale,
@@ -979,13 +1055,31 @@ async function boot() {
   initComposer(ctx);
   for (const a of document.querySelectorAll('.credit')) a.href = SITE_URL;
 
-  $('start-form').addEventListener('submit', (e) => { e.preventDefault(); if (!$('start-go').disabled) create(); });
-  $('join-form').addEventListener('submit', (e) => {
+  $('join-menu').addEventListener('submit', (e) => {
     e.preventDefault();
-    if ($('join-go').disabled) return;
-    $('join-name').value = saveName($('join-name').value);
+    if ($('join-go').disabled || creating) return;
     join($('join-id').value, $('join-pass').value);
   });
+  // A whole invite link pasted into the session field fills in both fields.
+  $('join-id').addEventListener('input', () => {
+    const raw = $('join-id').value;
+    if (!/[#/]/.test(raw)) return;
+    const h = parseJoinInput(raw);
+    if (!h) return;
+    $('join-id').value = h.id;
+    if (h.pass) $('join-pass').value = h.pass;
+    $(h.pass ? 'join-go' : 'join-pass').focus();
+  });
+  $('draft-join').addEventListener('click', (e) => {
+    e.stopPropagation(); // the click must not reach the document, which closes menus
+    openMenu('join');
+    $('join-id').focus();
+  });
+  $('bar-copy').addEventListener('click', async () => {
+    if (room && (await copy(roomLink(), $('bar-link')))) toast(t(room.pass ? 'invite.copied.linkPass' : 'invite.copied.link'));
+  });
+  $('bar-more').addEventListener('click', (e) => { e.stopPropagation(); if (room) openMenu('invite'); });
+  $('bar-close').addEventListener('click', () => { $('invite-bar').hidden = true; });
   $('gone-new').addEventListener('click', goHome);
   $('notice-new').addEventListener('click', startNew);
   $('notice-close').addEventListener('click', () => { $('notice').hidden = true; });

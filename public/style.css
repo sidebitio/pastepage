@@ -80,9 +80,6 @@ code { font-family: var(--font-code); font-size: .9em; }
 .wrap.narrow { max-width: 560px; }
 /* Wide view (a setting): the session view uses the full window width; the start and "session ended" pages keep their width. */
 html.wide #view-room .wrap { max-width: none; }
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-.cards h2 { margin: 0; font-size: 18px; letter-spacing: -.01em; }
-.cards .hint { margin-bottom: 6px; }
 .foot { margin-top: 20px; max-width: 46em; }
 .spacer { flex: 1; }
 .row { display: flex; gap: 8px; align-items: center; }
@@ -127,7 +124,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
 .pill.expiry:hover { border-color: var(--accent); }
 .pill.expiry.soon { color: var(--danger); border-color: var(--danger); }
 
-/* ---------- start / join / gone ---------- */
+/* ---------- session ended ---------- */
 .screen { padding-block: clamp(32px, 9vh, 96px) 48px; }
 .brand { font-weight: 800; letter-spacing: -.01em; margin: 0 0 8px; font-size: 22px; }
 .brand span { color: var(--muted); font-weight: 500; }
@@ -135,10 +132,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
 h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03em; margin: 0 0 14px; font-weight: 800; text-wrap: balance; }
 .lede { color: var(--muted); font-size: 16px; margin: 0 0 24px; max-width: 34em; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-.form { display: flex; flex-direction: column; gap: 6px; padding: 22px; }
-.form label { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 8px; }
-.form label:first-child { margin-top: 0; }
-.form .primary { margin-top: 18px; padding: 12px; font-size: 15px; }
 .hint { color: var(--muted); font-size: 13px; margin: 0; }
 .error { color: var(--danger); background: var(--danger-soft); padding: 8px 12px; border-radius: 8px; margin: 10px 0 0; font-size: 14px; }
 
@@ -183,6 +176,12 @@ h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03e
   html.wide #view-room .composer form { padding-left: calc(15% + 28px); padding-right: calc(15% + 28px); }
 }
 .empty { flex: 1; color: var(--muted); padding-block: 40px; text-align: center; }
+/* The draft page (no session yet): what happens on Send, Join instead, and the privacy line. */
+.draft-empty { max-width: 34em; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.draft-empty p { margin: 0; }
+.draft-lede { font-size: 16px; color: var(--ink); }
+.draft-empty .link { color: var(--accent); }
+.draft-empty .hint { margin-top: 12px; }
 
 .note {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
@@ -298,6 +297,27 @@ html.full-notes .more { display: none; }
 .notice-close:hover { color: var(--ink); background: var(--bg); }
 
 /* ---------- connection, invite, settings ---------- */
+/* The invite bar: shown once, after the first Send made the session. Part of the page, never over it. */
+.invite-bar-wrap { padding-top: 14px; }
+.invite-bar {
+  display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--accent-soft); border-radius: var(--radius);
+  padding: 8px 6px 8px 14px; font-size: 14px;
+}
+.invite-bar p { margin: 0; color: var(--ink); font-weight: 600; }
+.invite-bar code { flex: 1 1 14em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--muted); }
+.bar-copy, .bar-more {
+  border: 1px solid var(--accent-soft); background: var(--accent-soft); color: var(--accent);
+  border-radius: 6px; padding: 5px 10px; font-size: 13px; font-weight: 600; white-space: nowrap;
+}
+.bar-more { background: transparent; }
+.bar-copy:hover, .bar-more:hover { border-color: var(--accent); }
+/* The Join panel on the draft page. */
+.menu.join { width: min(320px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 6px; }
+.menu.join .hint { margin: 0 4px 6px; font-size: 12.5px; }
+.menu.join label { font-size: 13px; font-weight: 600; color: var(--muted); margin: 4px 4px 0; }
+.menu.join .primary.block { margin-top: 8px; }
+.menu.join .error { margin-top: 4px; }
 .pill.live.off { color: var(--muted); background: var(--bg); border-color: var(--line); }
 .ghost.icon { padding: 6px 8px; display: inline-flex; align-items: center; color: var(--muted); }
 .ghost.icon:hover { color: var(--ink); }
@@ -337,9 +357,12 @@ html.full-notes .more { display: none; }
 .burn-text { align-self: stretch; margin: 0; padding: 12px 14px; background: var(--code-bg); border-radius: 8px; font: 13px/1.6 var(--font-code); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 60vh; overflow: auto; }
 .burn-opt { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; }
 
-@media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
 @media (max-width: 560px) {
   #invite-btn { padding: 6px 10px; }
+  /* The Join panel would hang off the left edge under its button: on phones it spans the header instead. */
+  .top-row { position: relative; }
+  #join-wrap { position: static; }
+  .menu.join { left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: auto; }
   .compose-row { flex-wrap: wrap; }
   .compose-row .name-in { width: 110px; }
   #compose-size { display: none; }

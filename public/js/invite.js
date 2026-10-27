@@ -26,6 +26,18 @@ export function parseHash(hash) {
 }
 
 /**
+ * Read what was typed or pasted into the Join panel's session field: a whole invite link
+ * ("https://host/path#12-dancing-apes/tq7m8kxph3vdr2"), just its hash, "id/password", or a session name.
+ * @param {string} text the field's text
+ * @returns {{id: string, pass: string}|null} pass is '' when the text has none; null if no valid session name is in it
+ */
+export function parseJoinInput(text) {
+  const s = String(text || '').trim();
+  const hash = s.indexOf('#');
+  return parseHash(hash === -1 ? s : s.slice(hash + 1));
+}
+
+/**
  * Build a shareable link.
  * @param {string} base page URL without hash
  * @param {string} id session id
