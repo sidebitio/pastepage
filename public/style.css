@@ -128,6 +128,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
 .screen { padding-block: clamp(32px, 9vh, 96px) 48px; }
 .brand { font-weight: 800; letter-spacing: -.01em; margin: 0 0 8px; font-size: 22px; }
 .brand span { color: var(--muted); font-weight: 500; }
+/* The square after the name, as on pastepage.sidebit.io: in the text colour, sitting on the baseline. */
+.brand::after { content: ""; display: inline-block; width: .3em; height: .3em; margin-left: .16em; background: var(--ink); }
 .brand.small { margin: 0; font-size: 16px; }
 h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; letter-spacing: -.03em; margin: 0 0 14px; font-weight: 800; text-wrap: balance; }
 .lede { color: var(--muted); font-size: 16px; margin: 0 0 24px; max-width: 34em; }
