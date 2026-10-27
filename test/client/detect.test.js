@@ -78,6 +78,10 @@ test('detect: code that only looks a little like SQL keeps its own language', ()
   assert.notEqual(detectHighlight(hljs, py)?.language, 'sql');
   const js = "select(document.body).on('click', (e) => {\n  console.log(e.target);\n});";
   assert.notEqual(detectHighlight(hljs, js)?.language, 'sql');
+  // Plain sentences that start with an SQL word stay plain text (as before the SQL rule), or keep their old guess.
+  for (const t of ['Select all and paste it here', 'Delete from the list what you do not need', 'Drop table tennis practice today?']) {
+    assert.notEqual(detectHighlight(hljs, t)?.language, 'sql', t);
+  }
   const vbModule = 'Module Program\n  Sub Main()\n    Dim q = From c In customers Where c.Active Select c.Name\n    Console.WriteLine(q.Count())\n  End Sub\nEnd Module';
   assert.equal(detectHighlight(hljs, vbModule)?.language, 'vbnet');
 });

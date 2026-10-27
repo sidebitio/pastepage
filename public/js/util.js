@@ -62,9 +62,9 @@ export function langName(lang, hljs = globalThis.hljs) {
 const SQL_START = /^\s*(?:--[^\n]*\n\s*)*(?:select\s(?!\s*case\b)|insert\s+into\s|update\s+[\w."`[\]]+\s+set\s|delete\s+from\s|create\s+(?:or\s+replace\s+)?(?:temp(?:orary)?\s+)?(?:table|view|(?:unique\s+)?index|function|procedure|trigger|schema)\s|alter\s+table\s|drop\s+(?:table|view|index|function|schema)\s|with\s+(?:recursive\s+)?\w+\s+as\s*\()/i;
 
 /**
- * Whether a note starts like an SQL statement. Such notes are highlighted as SQL without asking highlight.js to guess:
- * its guess can be VB.NET, whose query syntax (Select, From, Where, Join, Group By, Order By) scores a multi-line
- * query higher than SQL does.
+ * Whether a note starts like an SQL statement. If SQL also fits it well enough, detectHighlight calls it SQL instead of
+ * taking highlight.js's guess, which can be VB.NET: its query syntax (Select, From, Where, Join, Group By, Order By)
+ * scores a multi-line query higher than SQL does.
  * @param {string} text
  * @returns {boolean}
  */
@@ -81,10 +81,15 @@ export function startsLikeSql(text) {
  * @returns {{language: string, value: string}|null} highlighted HTML, or null when no language fits
  */
 export function detectHighlight(hljs, text) {
-  if (startsLikeSql(text) && hljs.getLanguage('sql')) {
-    return { language: 'sql', value: hljs.highlight(text, { language: 'sql', ignoreIllegals: true }).value };
-  }
   const sample = text.length > DETECT_SAMPLE ? text.slice(0, DETECT_SAMPLE) : text;
+  // A note that starts like SQL is SQL when SQL itself fits it as well as detection requires of any language: that
+  // corrects a wrong guess (VB.NET), but a sentence such as "Select all and paste it here" stays plain text.
+  if (startsLikeSql(sample) && hljs.getLanguage('sql')) {
+    const sql = hljs.highlight(sample, { language: 'sql', ignoreIllegals: false });
+    if (!sql.illegal && sql.relevance >= DETECT_MIN_RELEVANCE) {
+      return { language: 'sql', value: sample === text ? sql.value : hljs.highlight(text, { language: 'sql', ignoreIllegals: true }).value };
+    }
+  }
   const r = hljs.highlightAuto(sample);
   if (!r.language || r.relevance < DETECT_MIN_RELEVANCE || !langName(r.language, hljs)) return null;
   if (sample === text) return { language: r.language, value: r.value };

@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- A multi-line SQL query is shown as SQL. It was often detected as VB.NET, whose query syntax uses the same words; a note that starts like an SQL statement (SELECT, INSERT INTO, UPDATE … SET, DELETE FROM, CREATE, ALTER, DROP or WITH … AS) is now highlighted as SQL straight away.
+- A multi-line SQL query is shown as SQL. It was often detected as VB.NET, whose query syntax uses the same words; a note that starts like an SQL statement (SELECT, INSERT INTO, UPDATE … SET, DELETE FROM, CREATE, ALTER, DROP or WITH … AS) and reads as SQL is now shown as SQL. A sentence that merely starts with such a word, like "Select all and paste it here", stays plain text.
 
 ## [0.2.0] - 2026-10-27
 
