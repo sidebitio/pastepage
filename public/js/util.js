@@ -56,6 +56,23 @@ export function langName(lang, hljs = globalThis.hljs) {
 }
 
 /**
+ * A note that starts like an SQL statement (after any "--" comment lines): SELECT, INSERT INTO, UPDATE ... SET,
+ * DELETE FROM, CREATE/ALTER/DROP of a table, view, index or function, or a WITH ... AS ( query. Any letter case.
+ */
+const SQL_START = /^\s*(?:--[^\n]*\n\s*)*(?:select\s(?!\s*case\b)|insert\s+into\s|update\s+[\w."`[\]]+\s+set\s|delete\s+from\s|create\s+(?:or\s+replace\s+)?(?:temp(?:orary)?\s+)?(?:table|view|(?:unique\s+)?index|function|procedure|trigger|schema)\s|alter\s+table\s|drop\s+(?:table|view|index|function|schema)\s|with\s+(?:recursive\s+)?\w+\s+as\s*\()/i;
+
+/**
+ * Whether a note starts like an SQL statement. Such notes are highlighted as SQL without asking highlight.js to guess:
+ * its guess can be VB.NET, whose query syntax (Select, From, Where, Join, Group By, Order By) scores a multi-line
+ * query higher than SQL does.
+ * @param {string} text
+ * @returns {boolean}
+ */
+export function startsLikeSql(text) {
+  return SQL_START.test(String(text).slice(0, 2000));
+}
+
+/**
  * Detect the language of a note and highlight it. Detection runs on the first DETECT_SAMPLE characters
  * only (highlightAuto tries every language and is slow on large text); a long note is then highlighted
  * once, in full, with the language that was found.
@@ -64,6 +81,9 @@ export function langName(lang, hljs = globalThis.hljs) {
  * @returns {{language: string, value: string}|null} highlighted HTML, or null when no language fits
  */
 export function detectHighlight(hljs, text) {
+  if (startsLikeSql(text) && hljs.getLanguage('sql')) {
+    return { language: 'sql', value: hljs.highlight(text, { language: 'sql', ignoreIllegals: true }).value };
+  }
   const sample = text.length > DETECT_SAMPLE ? text.slice(0, DETECT_SAMPLE) : text;
   const r = hljs.highlightAuto(sample);
   if (!r.language || r.relevance < DETECT_MIN_RELEVANCE || !langName(r.language, hljs)) return null;

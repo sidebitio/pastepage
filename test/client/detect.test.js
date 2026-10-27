@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { DETECT_SAMPLE, detectHighlight } from '../../public/js/util.js';
+import { DETECT_SAMPLE, detectHighlight, startsLikeSql } from '../../public/js/util.js';
 
 const src = readFileSync(new URL('../../public/vendor/highlight.min.js', import.meta.url), 'utf8');
 const sandbox = vm.createContext({ console });
@@ -46,4 +46,38 @@ test('detect: a short note is detected from the whole text', () => {
 
 test('detect: text with no recognisable language returns null', () => {
   assert.equal(detectHighlight(hljs, 'hello'), null);
+});
+
+test('detect: notes that start like an SQL statement are SQL, also where VB.NET scores higher', () => {
+  const sql = [
+    // VB.NET's LINQ query syntax (Select, From, Where, Join, Group By, Order By) outscores SQL on these two.
+    "SELECT c.name, SUM(o.total) AS revenue\nFROM customers c JOIN orders o ON o.customer_id = c.id\nWHERE o.placed_at >= '2026-07-01'\nGROUP BY c.name ORDER BY revenue DESC LIMIT 3;",
+    'SELECT c.name,\n       COUNT(o.id)  AS orders,\n       SUM(o.total) AS revenue\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nGROUP BY c.name\nORDER BY revenue DESC LIMIT 3;',
+    'select id, email\nfrom users\nwhere deleted_at is null\norder by created_at desc;',
+    '-- active users\n  SELECT id FROM users WHERE active;',
+    "WITH recent AS (\n  SELECT * FROM orders WHERE placed_at > now() - interval '7 days'\n)\nSELECT count(*) FROM recent;",
+    "INSERT INTO users (email, name)\nVALUES ('a@b.c', 'Ada');",
+    "UPDATE orders\nSET status = 'paid'\nWHERE id = 42;",
+    'DELETE FROM sessions\nWHERE expires_at < now();',
+    'CREATE TABLE notes (\n  id integer PRIMARY KEY,\n  body text NOT NULL\n);',
+    'create or replace view active as\nselect * from users where active;',
+    'ALTER TABLE users ADD COLUMN last_seen timestamptz;',
+    'DROP TABLE IF EXISTS tmp_import;',
+  ];
+  for (const text of sql) assert.equal(detectHighlight(hljs, text)?.language, 'sql', text.split('\n')[0]);
+});
+
+test('detect: code that only looks a little like SQL keeps its own language', () => {
+  // The SQL rule leaves these alone (VB's Select Case, Python's with ... as, a call named select). highlight.js's own
+  // detection still decides them; it already calls this VB snippet SQL, which this rule doesn't change.
+  const vb = 'Select Case answer\n  Case 1\n    Console.WriteLine("one")\n  Case Else\n    Console.WriteLine("other")\nEnd Select';
+  for (const t of [vb, "with open('x') as fh:", 'select(el).on(fn)', 'selection = 1', 'update(state)', 'Dim x As Integer']) {
+    assert.equal(startsLikeSql(t), false, t);
+  }
+  const py = "with open('notes.txt') as fh:\n    for line in fh:\n        print(line.strip())";
+  assert.notEqual(detectHighlight(hljs, py)?.language, 'sql');
+  const js = "select(document.body).on('click', (e) => {\n  console.log(e.target);\n});";
+  assert.notEqual(detectHighlight(hljs, js)?.language, 'sql');
+  const vbModule = 'Module Program\n  Sub Main()\n    Dim q = From c In customers Where c.Active Select c.Name\n    Console.WriteLine(q.Count())\n  End Sub\nEnd Module';
+  assert.equal(detectHighlight(hljs, vbModule)?.language, 'vbnet');
 });
